@@ -9,14 +9,14 @@ export class AppService {
     const redis = this.redisService.getClient();
 
     // Kiểm tra cache
-    const cached = await redis.get('hello');
+    const cached = await redis.get('yongseoh');
     if (cached) {
       return `From cache: ${cached}`;
     }
 
     // Nếu chưa có cache, set vào Redis
-    const result = 'Hello World!';
-    await redis.set('hello', result, 'EX', 60); // expire sau 60 giây
+    const result = 'yongseoh!';
+    await redis.set('yongseoh', result, 'EX', 10); // expire sau 60 giây
     return `From DB: ${result}`;
   }
 }
