@@ -1,7 +1,6 @@
 import { Advertisement } from 'src/advertisement/entities/advertisement.entity';
 import { Court } from 'src/court/entities/court.entity';
 import { Feedback } from 'src/feedback/entities/feedback.entity';
-import { Message } from 'src/message/entities/message.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserSubscription } from './userSubcription.entity';
@@ -40,17 +39,14 @@ export class User {
   @Column()
   documentUrl: string;
 
+  @Column()
+  bio: string;
+
   @OneToMany(() => Advertisement, (advertisement) => advertisement.owner)
   advertisements: Advertisement[];
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];
-
-  @OneToMany(() => Message, (message) => message.sender)
-  sentMessages: Message[];
-
-  @OneToMany(() => Message, (message) => message.receiver)
-  receivedMessages: Message[];
 
   @OneToMany(() => Court, (court) => court.owner)
   courts: Court[];

@@ -35,6 +35,9 @@ export class Booking {
   @Column()
   bookingDate: Date;
 
+  @Column()
+  inviteId: string;
+
   @ManyToOne(() => User, (user) => user.bookings)
   @JoinColumn({ name: 'userId' })
   user: User;

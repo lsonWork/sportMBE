@@ -11,10 +11,9 @@ import { UserModule } from './user/user.module';
 import { SubcriptionModule } from './subcription/subcription.module';
 import { AdvertisementModule } from './advertisement/advertisement.module';
 import { NotificationModule } from './notification/notification.module';
-import { ChatMessagesModule } from './chat-messages/chat-messages.module';
-import { MessageModule } from './message/message.module';
 import { BookingModule } from './booking/booking.module';
 import { PaymentModule } from './payment/payment.module';
+import { FriendRequestModule } from './friend-request/friend-request.module';
 
 @Module({
   imports: [
@@ -28,6 +27,7 @@ import { PaymentModule } from './payment/payment.module';
       password: process.env.DATABASE_PASSWORD,
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
+      synchronize: false,
     }),
     SportTypeModule,
     CourtModule,
@@ -36,10 +36,9 @@ import { PaymentModule } from './payment/payment.module';
     SubcriptionModule,
     AdvertisementModule,
     NotificationModule,
-    ChatMessagesModule,
-    MessageModule,
     BookingModule,
     PaymentModule,
+    FriendRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService],

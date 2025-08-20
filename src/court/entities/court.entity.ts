@@ -31,6 +31,9 @@ export class Court {
   @Column()
   isActive: boolean;
 
+  @Column()
+  subService: string;
+
   @ManyToOne(() => User, (user) => user.courts)
   @JoinColumn({ name: 'ownerId' })
   owner: User;
