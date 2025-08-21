@@ -18,13 +18,13 @@ export class User {
   @Column()
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   phoneNumber: string;
 
   @Column()
   password: string;
 
-  @Column()
+  @Column({ nullable: true })
   avatarUrl: string;
 
   @Column()
@@ -33,13 +33,13 @@ export class User {
   @Column()
   role: string;
 
-  @Column()
+  @Column({ nullable: true })
   bankAccount: string;
 
-  @Column()
+  @Column({ nullable: true })
   documentUrl: string;
 
-  @Column()
+  @Column({ nullable: true })
   bio: string;
 
   @OneToMany(() => Advertisement, (advertisement) => advertisement.owner)
@@ -58,7 +58,7 @@ export class User {
     () => UserSubscription,
     (userSubscription) => userSubscription.user,
   )
-  subscriptions: UserSubscription[];
+  userSubscriptions: UserSubscription[];
 
   @OneToMany(() => Booking, (booking) => booking.user)
   bookings: Booking[];

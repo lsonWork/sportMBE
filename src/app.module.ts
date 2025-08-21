@@ -14,6 +14,7 @@ import { NotificationModule } from './notification/notification.module';
 import { BookingModule } from './booking/booking.module';
 import { PaymentModule } from './payment/payment.module';
 import { FriendRequestModule } from './friend-request/friend-request.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FriendRequestModule } from './friend-request/friend-request.module';
     BookingModule,
     PaymentModule,
     FriendRequestModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

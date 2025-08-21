@@ -25,7 +25,7 @@ export class UserSubscription {
   @Column()
   paymentId: string;
 
-  @ManyToOne(() => User, (user) => user.subscriptions)
+  @ManyToOne(() => User, (user) => user.userSubscriptions)
   @JoinColumn({ name: 'userId' })
   user: User;
 
