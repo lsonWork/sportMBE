@@ -1,21 +1,29 @@
-// import { Injectable } from '@nestjs/common';
-// import { PassportStrategy } from '@nestjs/passport';
-// import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/entities/user.entity';
+import { Repository } from 'typeorm';
 
-// @Injectable()
-// export class JwtStrategy extends PassportStrategy(Strategy) {
-//   constructor() {
-//     super({
-//       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // lấy token từ header Authorization: Bearer xxx
-//       ignoreExpiration: false,
-//       secretOrKey: process.env.JWT_SECRET || 'super-secret',
-//     });
-//   }
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET || 'super-secret',
+    });
+  }
 
-//   // eslint-disable-next-line @typescript-eslint/require-await
-//   async validate(payload: any) {
-//     // payload chính là data đã được sign lúc login
-//     // return sẽ gắn vào request.user
-//     return { userId: payload.sub, username: payload.username };
-//   }
-// }
+  async validate(payload: any) {
+    const {id} = payload;
+    const user = await this.userRepository.findOneBy({ userId: id });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return user;
+  }
+}
