@@ -1,15 +1,19 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { SignupDTO } from './DTO/SignupDTO';
+import { LoginDTO } from './DTO/LoginDTO';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enum/Role';
+import { JwtService } from '@nestjs/jwt';
+import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
   async signup(signupObj: SignupDTO) {
     const existUser = await this.userRepository.findOneBy({
@@ -42,5 +46,23 @@ export class AuthService {
     }
 
     return user;
+  }
+  async login(loginDTO: LoginDTO) {
+    const { email, password } = loginDTO;
+
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user || !user.status || !(await bcrypt.compare(password, user.password))) {
+      throw new HttpException(
+        { message: 'Invalid email or password' },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const payload = { email: user.email, sub: user.userId , role: user.role };
+    const token = this.jwtService.sign(payload);
+
+    return { 
+      message: 'Login successful',
+      access: token };
   }
 }
