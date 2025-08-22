@@ -16,7 +16,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  
+
   const swaggerConfig = new DocumentBuilder()
     .setTitle('SportMBE API')
     .setDescription('Tài liệu API cho dự án SportMBE')
@@ -25,8 +25,8 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-docs', app, document);
-  
-//Config Global Guard
+
+  //Config Global Guard
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 

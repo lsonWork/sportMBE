@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enum/Role';
 import { JwtService } from '@nestjs/jwt';
-import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -47,22 +46,28 @@ export class AuthService {
 
     return user;
   }
+
   async login(loginDTO: LoginDTO) {
     const { email, password } = loginDTO;
 
     const user = await this.userRepository.findOneBy({ email });
-    if (!user || !user.status || !(await bcrypt.compare(password, user.password))) {
+    if (
+      !user ||
+      !user.status ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
       throw new HttpException(
         { message: 'Invalid email or password' },
         HttpStatus.UNAUTHORIZED,
       );
     }
 
-    const payload = { email: user.email, sub: user.userId , role: user.role };
+    const payload = { email: user.email, userId: user.userId, role: user.role };
     const token = this.jwtService.sign(payload);
 
-    return { 
+    return {
       message: 'Login successful',
-      access: token };
+      access: token,
+    };
   }
 }
