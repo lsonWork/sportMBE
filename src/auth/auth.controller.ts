@@ -5,6 +5,8 @@ import { AuthService } from './auth.service';
 import { LoginDTO } from './DTO/LoginDTO';
 import { Public } from './public.decorator';
 import { ApiBody } from '@nestjs/swagger';
+import { SendOtpDTO } from './DTO/SendOtpDTO';
+import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
 
 @Controller('auth')
 export class AuthController {
@@ -25,6 +27,7 @@ export class AuthController {
     const user = await this.authService.signup(signupDTO);
     return user;
   }
+
   @Public()
   @Post('login')
   @ApiBody({
@@ -38,6 +41,37 @@ export class AuthController {
   })
   async login(@Body() loginDTO: LoginDTO) {
     const result = await this.authService.login(loginDTO);
+    return result;
+  }
+
+  @Public()
+  @Post('send-otp')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+      },
+    },
+  })
+  async sendOtp(@Body() sendOtpDTO: SendOtpDTO) {
+    const result = await this.authService.sendOtp(sendOtpDTO);
+    return result;
+  }
+
+  @Public()
+  @Post('verify-otp')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+        otp: { type: 'string', example: '123456' },
+      },
+    },
+  })
+  async verifyOtp(@Body() verifyOtpDTO: VerifyOtpDTO) {
+    const result = await this.authService.verifyOtp(verifyOtpDTO);
     return result;
   }
 }
