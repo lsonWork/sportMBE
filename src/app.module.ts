@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RedisModule } from './redis/redis.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // Thêm ConfigService
+import { ConfigModule } from '@nestjs/config';
 import { SportTypeModule } from './sport-type/sport-type.module';
 import { CourtModule } from './court/court.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -17,8 +17,7 @@ import { FriendRequestModule } from './friend-request/friend-request.module';
 import { AuthModule } from './auth/auth.module';
 
 // Các import được thêm vào cho Mailer
-import { MailerModule } from '@nestjs-modules/mailer';
-import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -34,31 +33,6 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
       autoLoadEntities: true,
       synchronize: false,
     }),
-    MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        transport: {
-          host: 'smtp.gmail.com',
-          secure: false,
-          auth: {
-            user: configService.get<string>('EMAIL_USER'),
-            pass: configService.get<string>('EMAIL_PASSWORD'),
-          },
-        },
-        defaults: {
-          from: '"SportMBE No Reply" <noreply@sportmbe.com>',
-        },
-        template: {
-          dir: process.cwd() + '/src/templates/',
-          adapter: new PugAdapter(),
-          options: {
-            strict: true,
-          },
-        },
-      }),
-    }),
-
     SportTypeModule,
     CourtModule,
     FeedbackModule,
@@ -70,6 +44,7 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
     PaymentModule,
     FriendRequestModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

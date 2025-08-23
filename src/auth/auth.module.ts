@@ -6,6 +6,8 @@ import { AuthService } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { JwtStrategy } from './jwt-strategy';
+import { RedisModule } from 'src/redis/redis.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { JwtStrategy } from './jwt-strategy';
       secret: process.env.JWT_SECRET || 'super-secret', // bí mật
       signOptions: { expiresIn: '1h' }, // token hết hạn sau 1h
     }),
+    RedisModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
