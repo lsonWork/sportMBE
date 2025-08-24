@@ -1,4 +1,4 @@
-import { Body, Controller } from '@nestjs/common';
+import { Body, Controller, Patch } from '@nestjs/common';
 import { Post } from '@nestjs/common';
 import { SignupDTO } from './DTO/SignupDTO';
 import { AuthService } from './auth.service';
@@ -7,6 +7,7 @@ import { Public } from './public.decorator';
 import { ApiBody } from '@nestjs/swagger';
 import { SendOtpDTO } from './DTO/SendOtpDTO';
 import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
+import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
 
 @Controller('auth')
 export class AuthController {
@@ -29,7 +30,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login')
+  @Post('signin')
   @ApiBody({
     schema: {
       type: 'object',
@@ -72,6 +73,22 @@ export class AuthController {
   })
   async verifyOtp(@Body() verifyOtpDTO: VerifyOtpDTO) {
     const result = await this.authService.verifyOtp(verifyOtpDTO);
+    return result;
+  }
+
+  @Public()
+  @Patch('update-password')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+        newPassword: { type: 'string', example: 'P@ssw0rd123' },
+      },
+    },
+  })
+  async changePassword(@Body() changePasswordDTO: ChangePasswordDTO) {
+    const result = await this.authService.changePassword(changePasswordDTO);
     return result;
   }
 }

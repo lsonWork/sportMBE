@@ -12,6 +12,7 @@ import { RedisService } from 'src/redis/redis.service';
 import { MailService } from 'src/mail/mail.service';
 import { sanitizeEmail } from 'src/utils/santinizeEmail';
 import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
+import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
 
 @Injectable()
 export class AuthService {
@@ -100,6 +101,31 @@ export class AuthService {
       throw new HttpException(
         { message: 'Invalid OTP' },
         HttpStatus.UNAUTHORIZED,
+      );
+    }
+    return true;
+  }
+
+  async changePassword(changePasswordDTO: ChangePasswordDTO) {
+    const { email, newPassword } = changePasswordDTO;
+
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user) {
+      throw new HttpException(
+        { message: 'User not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
+    try {
+      await this.userRepository.save(user);
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(
+        { message: err.message || 'Error changing password' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
     return true;
