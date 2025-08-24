@@ -3,12 +3,10 @@ import { MailService } from './mail.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     MailerModule.forRootAsync({
-      imports: [ConfigModule],
       useFactory: () => ({
         transport: {
           host: 'smtp.gmail.com',

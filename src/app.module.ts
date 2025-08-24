@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RedisModule } from './redis/redis.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
 import { SportTypeModule } from './sport-type/sport-type.module';
 import { CourtModule } from './court/court.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -18,10 +17,10 @@ import { AuthModule } from './auth/auth.module';
 
 // Các import được thêm vào cho Mailer
 import { MailModule } from './mail/mail.module';
+import { RolesGuard } from './common/guards/role.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -47,6 +46,6 @@ import { MailModule } from './mail/mail.module';
     MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, RolesGuard],
 })
 export class AppModule {}

@@ -1,17 +1,19 @@
-import { Body, Controller, UseGuards } from '@nestjs/common';
+import { Body, Controller, UseGuards, Request } from '@nestjs/common';
 import { SportTypeService } from './sport-type.service';
 import { Post } from '@nestjs/common';
 import { CreateSportTypeDto } from './DTO/CreateSportTypeDto';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('sport-type')
 export class SportTypeController {
   constructor(private readonly sportTypeService: SportTypeService) {}
 
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.ADMIN)
   @ApiBody({
     schema: {

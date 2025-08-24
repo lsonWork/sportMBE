@@ -1,8 +1,7 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
 import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
 import { join } from 'path';
-
-config(); // load .env
 
 const isTs = __filename.endsWith('.ts'); // true khi chạy dev (ts-node)
 
