@@ -14,7 +14,7 @@ import { MailModule } from 'src/mail/mail.module';
     TypeOrmModule.forFeature([User]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'super-secret', // bí mật
+      secret: process.env.JWT_SECRET as string, // bí mật
       signOptions: { expiresIn: '1h' }, // token hết hạn sau 1h
     }),
     RedisModule,
