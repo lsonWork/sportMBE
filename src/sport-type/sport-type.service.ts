@@ -13,7 +13,7 @@ export class SportTypeService {
 
   async createSportType(createSportTypeDto: CreateSportTypeDto) {
     const { name } = createSportTypeDto;
-    const newSportType = this.sportTypeRepository.create({ typeName: name });
+    const newSportType = this.sportTypeRepository.create({ typeName: name, status: true });
     try {
       const result = await this.sportTypeRepository.save(newSportType);
       return result;
