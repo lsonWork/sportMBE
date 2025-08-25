@@ -9,6 +9,9 @@ export class SportType {
   @Column()
   typeName: string;
 
+  @Column()
+  status: boolean;
+
   @OneToMany(() => Court, (court) => court.sportType)
   courts: Court[];
 }

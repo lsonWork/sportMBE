@@ -13,7 +13,7 @@ export class SportTypeController {
   constructor(private readonly sportTypeService: SportTypeService) {}
 
   @ApiBearerAuth('access-token')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
   @ApiBody({
     schema: {
