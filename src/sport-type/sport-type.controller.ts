@@ -5,6 +5,8 @@ import {
   Request,
   Get,
   Query,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { SportTypeService } from './sport-type.service';
 import { Post } from '@nestjs/common';
@@ -13,6 +15,7 @@ import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { EditSportTypeDto } from './DTO/EditSportTypeDto';
 
 @Controller('sport-type')
 export class SportTypeController {
@@ -52,6 +55,29 @@ export class SportTypeController {
       page,
       limit,
       search,
+    );
+    return result;
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  @Patch('edit/:id')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Basketball' },
+      },
+    },
+  })
+  async editSportType(
+    @Param('id') id: string,
+    @Body() editSportTypeDto: EditSportTypeDto,
+  ) {
+    const result = await this.sportTypeService.editSportType(
+      id,
+      editSportTypeDto,
     );
     return result;
   }
