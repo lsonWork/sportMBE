@@ -57,7 +57,6 @@ export class SportTypeService {
     const editSportTypeObj = await this.sportTypeRepository.findOneBy({
       sportTypeId: id,
     });
-    console.log(editSportTypeObj);
     if (!editSportTypeObj) {
       throw new HttpException(
         { message: 'Sport type not found' },
