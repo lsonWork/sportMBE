@@ -12,7 +12,7 @@ export class CreateCourtRequestDto {
   @IsArray({ message: "Images must be an array of URLs" })
   @ArrayNotEmpty({ message: "At least one image URL is required" })
   @IsNotEmpty({ message: "Image URL is required" })
-  imgUrl: string[];
+  imgUrls: string[];
 
   @IsUUID('4', { message: 'Sport type must be a valid UUID' })
   @IsNotEmpty({ message: "Sport type is required" })

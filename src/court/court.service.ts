@@ -27,7 +27,7 @@ export class CourtService {
       );
     }
     const sportType = await this.sportTypeRepository.findOne({
-      where: { typeName: createCourtDto.sportType },
+      where: { sportTypeId: createCourtDto.sportType },
     });
     if (!sportType) {
       throw new HttpException(

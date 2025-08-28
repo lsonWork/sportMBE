@@ -18,7 +18,7 @@ export class CourtController {
             type: 'object',
             properties: {
               name: { type: 'string', example: "Nguyen Van A" },
-              adress: { type: 'string', example: "Ha Noi" },
+              address: { type: 'string', example: "Ha Noi" },
               imgUrls: { type: 'array', example: "aaaa.url" },
               sportType: { 
                   type: 'string',
@@ -37,7 +37,7 @@ export class CourtController {
           },
         })
     async createCourt(@Body() createCourtDto: CreateCourtRequestDto, @Request() req) {
-        const owner = req.user;
-        return this.courtService.createCourt(createCourtDto, owner);
+        const loggedInUser = req.user;
+        return this.courtService.createCourt(createCourtDto, loggedInUser);
     }
 }
