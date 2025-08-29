@@ -78,4 +78,35 @@ export class SportTypeService {
       );
     }
   }
+
+  async deleteSportType(id: string) {
+    if (!isUuid(id)) {
+      throw new HttpException(
+        { message: 'Invalid sport type ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const deleteSportTypeObj = await this.sportTypeRepository.findOneBy({
+      sportTypeId: id,
+    });
+    if (!deleteSportTypeObj) {
+      throw new HttpException(
+        { message: 'Sport type not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    deleteSportTypeObj.status = false;
+
+    try {
+      const result = await this.sportTypeRepository.save(deleteSportTypeObj);
+      return result;
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(
+        { message: err.message || 'Error deleting sport type' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

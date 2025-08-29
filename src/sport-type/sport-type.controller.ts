@@ -7,6 +7,7 @@ import {
   Query,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { SportTypeService } from './sport-type.service';
 import { Post } from '@nestjs/common';
@@ -79,6 +80,15 @@ export class SportTypeController {
       id,
       editSportTypeDto,
     );
+    return result;
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  @Delete('delete/:id')
+  async deleteSportType(@Param('id') id: string) {
+    const result = await this.sportTypeService.deleteSportType(id);
     return result;
   }
 }
