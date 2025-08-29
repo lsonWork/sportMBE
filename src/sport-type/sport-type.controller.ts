@@ -33,7 +33,7 @@ export class SportTypeController {
       },
     },
   })
-  @Post('create')
+  @Post()
   async createSportType(@Body() createSportTypeDto: CreateSportTypeDto) {
     const result =
       await this.sportTypeService.createSportType(createSportTypeDto);
@@ -63,7 +63,7 @@ export class SportTypeController {
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  @Patch('edit/:id')
+  @Patch(':id')
   @ApiBody({
     schema: {
       type: 'object',
@@ -86,7 +86,7 @@ export class SportTypeController {
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  @Delete('delete/:id')
+  @Delete(':id')
   async deleteSportType(@Param('id') id: string) {
     const result = await this.sportTypeService.deleteSportType(id);
     return result;
