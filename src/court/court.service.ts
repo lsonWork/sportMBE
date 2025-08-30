@@ -6,10 +6,14 @@ import { CreateCourtRequestDto } from './DTO/createCourtRequestDto';
 import { User } from 'src/user/entities/user.entity';
 import { Role } from 'src/common/enum/Role';
 import { SportType } from 'src/sport-type/entities/sportType.entity';
-import { isUUID } from 'class-validator';
 import { Param, ParseUUIDPipe } from '@nestjs/common';
 import { Body, Request } from '@nestjs/common';
 import { EditCourtDto } from './DTO/editCourtDto';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class CourtService {
@@ -60,18 +64,12 @@ export class CourtService {
       );
     }
   }
+
   async updateCourt(
     @Param() id: string,
     @Body() editCourtDto: EditCourtDto,
     owner: User,
   ): Promise<Court> {
-    // if (!isUUID(id)) {
-    //   throw new HttpException(
-    //     { message: 'Invalid court ID' },
-    //     HttpStatus.BAD_REQUEST,
-    //   );
-    // }
-    console.log(id);
     const court = await this.courtRepository.findOne({
       where: { courtId: id },
       relations: ['owner'],
@@ -82,7 +80,7 @@ export class CourtService {
         HttpStatus.NOT_FOUND,
       );
     }
-    if (court.owner.userId !==(owner.userId)) {
+    if (court.owner.userId !== owner.userId) {
       throw new HttpException(
         { message: 'You do not have permission to edit this court' },
         HttpStatus.FORBIDDEN,
@@ -99,5 +97,34 @@ export class CourtService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+  async paginate(
+    options: IPaginationOptions,
+    sportTypeId?: string,
+    search?: string,
+  ): Promise<Pagination<Court>> {
+    const queryBuilder = this.courtRepository.createQueryBuilder('court');
+
+    queryBuilder
+      .leftJoinAndSelect('court.sportType', 'sportType') // JOIN và SELECT dữ liệu từ SportType
+      .leftJoinAndSelect('court.courtImages', 'courtImages') // JOIN và SELECT dữ liệu từ CourtImage
+      .orderBy('court.courtName', 'ASC');
+
+    if (sportTypeId) {
+      queryBuilder.andWhere('sportType.sportTypeId = :sportTypeId', {
+        sportTypeId,
+      });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(court.courtName ILIKE :search OR court.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+    queryBuilder.groupBy(
+      'court.courtId, sportType.sportTypeId, courtImages.imageId',
+    );
+    return paginate<Court>(queryBuilder, options);
   }
 }
