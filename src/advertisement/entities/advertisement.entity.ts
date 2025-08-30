@@ -27,6 +27,9 @@ export class Advertisement {
   @Column()
   endDate: Date;
 
+  @Column()
+  status: boolean;
+
   @ManyToOne(() => User, (user) => user.advertisements)
   @JoinColumn({ name: 'ownerId' })
   owner: User;
