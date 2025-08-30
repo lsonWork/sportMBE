@@ -34,6 +34,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
       synchronize: false,
+      logging: true,
     }),
     SportTypeModule,
     CourtModule,

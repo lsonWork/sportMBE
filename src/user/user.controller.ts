@@ -20,7 +20,6 @@ import { Role } from 'src/common/enum/Role';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { plainToClass } from 'class-transformer';
 import { UserResponseDTO } from './DTO/UserDTO';
-import { AuthGuard } from '@nestjs/passport';
 import { UpdateStatusDto } from './DTO/UpdateStatusDto';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
