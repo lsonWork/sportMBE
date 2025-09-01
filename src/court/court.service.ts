@@ -9,6 +9,7 @@ import { SportType } from 'src/sport-type/entities/sportType.entity';
 import { Param, ParseUUIDPipe } from '@nestjs/common';
 import { Body, Request } from '@nestjs/common';
 import { EditCourtDto } from './DTO/editCourtDto';
+import { DeleteCourtDto } from './DTO/deleteCourtDto';
 import {
   IPaginationOptions,
   paginate,
@@ -126,5 +127,37 @@ export class CourtService {
       'court.courtId, sportType.sportTypeId, courtImages.imageId',
     );
     return paginate<Court>(queryBuilder, options);
+  }
+
+  async deleteCourtDto(owner: User, courtId: string): Promise<void> {
+    const court = await this.courtRepository.findOne({
+      where: { courtId: courtId },
+      relations: ['owner'],
+    });
+    if (!court) {
+      throw new HttpException(
+        { message: 'Court not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (court.owner.userId !== owner.userId) {
+      throw new HttpException(
+        { message: 'You do not have permission to delete this court' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (court.isActive) {
+      court.isActive = false;
+    } else {
+      court.isActive = true;
+    }
+    try {
+      await this.courtRepository.save(court);
+    } catch (error) {
+      throw new HttpException(
+        { message: 'Error deleting court' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

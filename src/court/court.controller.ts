@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CourtService } from './court.service';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
@@ -122,5 +122,24 @@ export class CourtController {
       );
 
       return new Pagination<CourtDto>(transformedItems, courtPage.meta);
+    }
+
+    @Post('/:id/status')
+    @UseGuards(RolesGuard)
+    @Roles(RoleEnum.OWNER)
+    @ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          isActive: { type: 'boolean', example: true },
+        },
+      },
+    })
+    async deleteCourt(
+      @Param('id') id: string,
+      @Request() req,
+    ) {
+      const loggedInUser = req.user;
+      return this.courtService.deleteCourtDto( loggedInUser, id);
     }
 }
