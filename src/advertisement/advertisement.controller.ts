@@ -69,4 +69,12 @@ export class AdvertisementController {
   ) {
     return this.advertisementService.findAll(page, limit, search);
   }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @Get('me')
+  findOne(@GetUser() user: JwtUser) {
+    return this.advertisementService.findMyAds(user.userId);
+  }
 }

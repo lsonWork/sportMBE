@@ -4,6 +4,8 @@ import { Advertisement } from './entities/advertisement.entity';
 import { Repository } from 'typeorm';
 import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
 import { paginate } from 'nestjs-typeorm-paginate';
+import { validate as isUuid } from 'uuid';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class AdvertisementService {
@@ -32,5 +34,18 @@ export class AdvertisementService {
       });
     }
     return paginate<Advertisement>(queryBuilder, { page, limit });
+  }
+
+  async findMyAds(userId: string) {
+    if (!isUuid(userId)) {
+      throw new HttpException(
+        { message: 'Invalid user ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const result = await this.advertisementRepository.find({
+      where: { owner: { userId } },
+    });
+    return result;
   }
 }
