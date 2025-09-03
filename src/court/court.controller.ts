@@ -1,22 +1,32 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CourtService } from './court.service';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { CreateCourtRequestDto } from './DTO/createCourtRequestDto';
 import { Request } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { EditCourtDto } from './DTO/editCourtDto';
 import { Param, ParseUUIDPipe } from '@nestjs/common';
-import { Court } from './entities/court.entity';
-import { IPaginationOptions, Pagination } from 'nestjs-typeorm-paginate';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { CourtDto } from './DTO/courtDto';
-import { SportType } from 'src/sport-type/entities/sportType.entity';
 import { plainToClass } from 'class-transformer';
 
 @Controller('court')
 export class CourtController {
   constructor(private readonly courtService: CourtService) {}
+  @ApiBearerAuth('access-token')
   @Post('/')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
@@ -58,6 +68,7 @@ export class CourtController {
     return this.courtService.createCourt(createCourtDto, loggedInUser);
   }
 
+  @ApiBearerAuth('access-token')
   @Patch('/:id')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
@@ -100,46 +111,45 @@ export class CourtController {
     return this.courtService.updateCourt(id, editCourtDto, loggedInUser);
   }
 
+  @ApiBearerAuth('access-token')
   @Get('/')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
   async findAll(
-      @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-      @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-      @Query('sportTypeId') sportTypeId?: string,
-      @Query('search') search?: string,
-    ): Promise<Pagination<CourtDto>> {
-      limit = limit > 100 ? 100 : limit;
-      const courtPage = await this.courtService.paginate(
-        { page, limit },
-        sportTypeId,
-        search,
-      );
-      const transformedItems = courtPage.items.map((court) =>
-        plainToClass(CourtDto, court, {
-          excludeExtraneousValues: true, // Rất quan trọng!
-        }),
-      );
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('sportTypeId') sportTypeId?: string,
+    @Query('search') search?: string,
+  ): Promise<Pagination<CourtDto>> {
+    limit = limit > 100 ? 100 : limit;
+    const courtPage = await this.courtService.paginate(
+      { page, limit },
+      sportTypeId,
+      search,
+    );
+    const transformedItems = courtPage.items.map((court) =>
+      plainToClass(CourtDto, court, {
+        excludeExtraneousValues: true, // Rất quan trọng!
+      }),
+    );
 
-      return new Pagination<CourtDto>(transformedItems, courtPage.meta);
-    }
+    return new Pagination<CourtDto>(transformedItems, courtPage.meta);
+  }
 
-    @Post('/:id/status')
-    @UseGuards(RolesGuard)
-    @Roles(RoleEnum.OWNER)
-    @ApiBody({
-      schema: {
-        type: 'object',
-        properties: {
-          isActive: { type: 'boolean', example: true },
-        },
+  @ApiBearerAuth('access-token')
+  @Post('/:id/status')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isActive: { type: 'boolean', example: true },
       },
-    })
-    async deleteCourt(
-      @Param('id') id: string,
-      @Request() req,
-    ) {
-      const loggedInUser = req.user;
-      return this.courtService.deleteCourtDto( loggedInUser, id);
-    }
+    },
+  })
+  async deleteCourt(@Param('id') id: string, @Request() req) {
+    const loggedInUser = req.user;
+    return this.courtService.deleteCourtDto(loggedInUser, id);
+  }
 }

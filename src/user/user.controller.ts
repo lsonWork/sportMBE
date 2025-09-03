@@ -24,11 +24,13 @@ import { UpdateStatusDto } from './DTO/UpdateStatusDto';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @ApiBearerAuth('access-token')
   @Get()
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
@@ -55,6 +57,7 @@ export class UserController {
     return new Pagination<UserResponseDTO>(transformedItems, userPage.meta);
   }
 
+  @ApiBearerAuth('access-token')
   @Get(':id')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
@@ -75,6 +78,7 @@ export class UserController {
     });
   }
 
+  @ApiBearerAuth('access-token')
   @Get(':id/status')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
@@ -83,17 +87,18 @@ export class UserController {
     return { status: user.status };
   }
 
+  @ApiBearerAuth('access-token')
   @Post(':id/status')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
   @ApiBody({
-      schema: {
-        type: 'object',
-        properties: {
-          status: { type: 'boolean', example: true },
-        },
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'boolean', example: true },
       },
-    })
+    },
+  })
   async updateStatus(
     @Param('id') id: string,
     @Body() updateStatusDto: UpdateStatusDto,
