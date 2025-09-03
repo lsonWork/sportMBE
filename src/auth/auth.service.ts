@@ -62,10 +62,7 @@ export class AuthService {
     const user = await this.userRepository.findOneBy({ email });
     if (user) {
       if (password) {
-        if (
-          !user.status ||
-          !(await bcrypt.compare(password, user.password))
-        ) {
+        if (!user.status || !(await bcrypt.compare(password, user.password))) {
           throw new HttpException(
             { message: 'Invalid email or password' },
             HttpStatus.UNAUTHORIZED,
@@ -102,6 +99,16 @@ export class AuthService {
     return {
       message: 'Login successful',
       access: token,
+      user: {
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        avatarUrl: user.avatarUrl,
+        role: user.role,
+        bankAccount: user.bankAccount,
+        documentUrl: user.documentUrl,
+        bio: user.bio,
+      },
     };
   }
 
