@@ -1,7 +1,7 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AdvertisementService } from './advertisement.service';
 import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
@@ -36,5 +36,37 @@ export class AdvertisementController {
       user.userId,
       createAdvertisementDto,
     );
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @Get()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Trang hiện tại',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Số item mỗi trang',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.advertisementService.findAll(page, limit, search);
   }
 }
