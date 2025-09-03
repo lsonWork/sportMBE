@@ -60,11 +60,36 @@ export class AuthService {
     const { email, password } = loginDTO;
 
     const user = await this.userRepository.findOneBy({ email });
-    if (
-      !user ||
-      !user.status ||
-      !(await bcrypt.compare(password, user.password))
-    ) {
+    if (user) {
+      if (password) {
+        if (
+          !user.status ||
+          !(await bcrypt.compare(password, user.password))
+        ) {
+          throw new HttpException(
+            { message: 'Invalid email or password' },
+            HttpStatus.UNAUTHORIZED,
+          );
+        }
+      } else {
+        const newAccount = {
+          fullName: loginDTO.fullName,
+          email: loginDTO.email,
+          status: true,
+          role: Role.CLIENT,
+        };
+        const user = this.userRepository.create(newAccount);
+        try {
+          await this.userRepository.save(user);
+        } catch (error) {
+          const err = error as Error;
+          throw new HttpException(
+            { message: err.message || 'Error creating user' },
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+        }
+      }
+    } else {
       throw new HttpException(
         { message: 'Invalid email or password' },
         HttpStatus.UNAUTHORIZED,
