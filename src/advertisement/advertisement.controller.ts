@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdvertisementService } from './advertisement.service';
 import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
 import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -7,6 +15,7 @@ import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('advertisement')
 export class AdvertisementController {
@@ -75,6 +84,12 @@ export class AdvertisementController {
   @Roles(RoleEnum.OWNER)
   @Get('me')
   findOne(@GetUser() user: JwtUser) {
-    return this.advertisementService.findMyAds(user.userId);
+    return this.advertisementService.getAdsByOwnerId(user.userId);
+  }
+
+  @Public()
+  @Get(':userId')
+  getOwnerAds(@Param('userId') userId: string) {
+    return this.advertisementService.getAdsByOwnerId(userId);
   }
 }
