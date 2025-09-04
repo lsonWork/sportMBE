@@ -36,7 +36,7 @@ export class AdvertisementService {
     return paginate<Advertisement>(queryBuilder, { page, limit });
   }
 
-  async findMyAds(userId: string) {
+  async getAdsByOwnerId(userId: string) {
     if (!isUuid(userId)) {
       throw new HttpException(
         { message: 'Invalid user ID' },
