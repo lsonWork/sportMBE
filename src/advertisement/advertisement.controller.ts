@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +17,7 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 import { Public } from 'src/auth/public.decorator';
+import { UpdateAdvertisementDto } from './DTO/UpdateAdvertisementDto';
 
 @Controller('advertisement')
 export class AdvertisementController {
@@ -91,5 +93,31 @@ export class AdvertisementController {
   @Get(':userId')
   getOwnerAds(@Param('userId') userId: string) {
     return this.advertisementService.getAdsByOwnerId(userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        content: { type: 'string' },
+        imageUrl: { type: 'string' },
+        startDate: { type: 'string', format: 'date-time' },
+        endDate: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @Patch(':advertisementId')
+  updateAdvertisement(
+    @Param('advertisementId') advertisementId: string,
+    @Body() updateAdvertisementDto: UpdateAdvertisementDto,
+  ) {
+    return this.advertisementService.updateAdvertisement(
+      advertisementId,
+      updateAdvertisementDto,
+    );
   }
 }
