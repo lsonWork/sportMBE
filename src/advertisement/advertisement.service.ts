@@ -6,6 +6,7 @@ import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { validate as isUuid } from 'uuid';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { UpdateAdvertisementDto } from './DTO/UpdateAdvertisementDto';
 
 @Injectable()
 export class AdvertisementService {
@@ -22,7 +23,7 @@ export class AdvertisementService {
       owner: { userId },
       status: true,
     });
-    return this.advertisementRepository.save(newAds);
+    return await this.advertisementRepository.save(newAds);
   }
 
   async findAll(page: number, limit: number, search?: string) {
@@ -47,5 +48,30 @@ export class AdvertisementService {
       where: { owner: { userId } },
     });
     return result;
+  }
+
+  async updateAdvertisement(
+    advertisementId: string,
+    updateAdvertisementDto: UpdateAdvertisementDto,
+  ) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const advertisement = await this.advertisementRepository.findOne({
+      where: { advertisementId },
+    });
+    if (!advertisement) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return await this.advertisementRepository.save({
+      ...advertisement,
+      ...updateAdvertisementDto,
+    });
   }
 }
