@@ -21,6 +21,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
 import { RolesGuard } from './common/guards/role.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RequestUpdateModule } from './request-update/request-update.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     FriendRequestModule,
     AuthModule,
     MailModule,
+    RequestUpdateModule,
   ],
   controllers: [AppController],
   providers: [AppService, RolesGuard,{
