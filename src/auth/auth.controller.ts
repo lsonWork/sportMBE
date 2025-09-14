@@ -5,8 +5,8 @@ import { AuthService } from './auth.service';
 import { LoginDTO } from './DTO/LoginDTO';
 import { Public } from './public.decorator';
 import { ApiBody } from '@nestjs/swagger';
-import { SendOtpDTO } from './DTO/SendOtpDTO';
-import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
+// import { SendOtpDTO } from './DTO/SendOtpDTO';
+// import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
 import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
 
 @Controller('auth')
@@ -45,36 +45,36 @@ export class AuthController {
     return result;
   }
 
-  @Public()
-  @Post('send-otp')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        email: { type: 'string', example: 'user@example.com' },
-      },
-    },
-  })
-  async sendOtp(@Body() sendOtpDTO: SendOtpDTO) {
-    const result = await this.authService.sendOtp(sendOtpDTO);
-    return result;
-  }
+  // @Public()
+  // @Post('send-otp')
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       email: { type: 'string', example: 'user@example.com' },
+  //     },
+  //   },
+  // })
+  // async sendOtp(@Body() sendOtpDTO: SendOtpDTO) {
+  //   const result = await this.authService.sendOtp(sendOtpDTO);
+  //   return result;
+  // }
 
-  @Public()
-  @Post('verify-otp')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        email: { type: 'string', example: 'user@example.com' },
-        otp: { type: 'string', example: '123456' },
-      },
-    },
-  })
-  async verifyOtp(@Body() verifyOtpDTO: VerifyOtpDTO) {
-    const result = await this.authService.verifyOtp(verifyOtpDTO);
-    return result;
-  }
+  // @Public()
+  // @Post('verify-otp')
+  // @ApiBody({
+  //   schema: {
+  //     type: 'object',
+  //     properties: {
+  //       email: { type: 'string', example: 'user@example.com' },
+  //       otp: { type: 'string', example: '123456' },
+  //     },
+  //   },
+  // })
+  // async verifyOtp(@Body() verifyOtpDTO: VerifyOtpDTO) {
+  //   const result = await this.authService.verifyOtp(verifyOtpDTO);
+  //   return result;
+  // }
 
   @Public()
   @Patch('update-password')
