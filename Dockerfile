@@ -1,18 +1,22 @@
 FROM node:20.10.0
 
+# Tạo thư mục app
 WORKDIR /app
 
-COPY package.json ./
-COPY tsconfig*.json ./
-COPY ormconfig.js ./
-COPY typeorm-cli.ts ./
+# Copy package.json và lock file trước để cache install
+COPY package*.json ./
 
-RUN npm install
+# Cài dependencies
+RUN npm install --production
 
+# Copy toàn bộ code
 COPY . .
 
+# Build NestJS (nếu code của mày là TS)
 RUN npm run build
 
+# Render sẽ gán PORT, app phải listen process.env.PORT
 EXPOSE 8000
 
-CMD ["npm", "run", "start:migrate"]
+# Chạy app ở mode production
+CMD ["npm", "run", "start:prod"]
