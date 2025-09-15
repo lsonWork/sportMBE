@@ -7,11 +7,11 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enum/Role';
 import { JwtService } from '@nestjs/jwt';
-// import { SendOtpDTO } from './DTO/SendOtpDTO';
-// import { RedisService } from 'src/redis/redis.service';
+import { SendOtpDTO } from './DTO/SendOtpDTO';
+import { RedisService } from 'src/redis/redis.service';
 import { MailService } from 'src/mail/mail.service';
-// import { sanitizeEmail } from 'src/utils/santinizeEmail';
-// import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
+import { sanitizeEmail } from 'src/utils/santinizeEmail';
+import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
 import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
-    // private redisService: RedisService,
+    private redisService: RedisService,
     private mailService: MailService,
   ) {}
 
@@ -112,31 +112,31 @@ export class AuthService {
     };
   }
 
-  // async sendOtp(sendOtpDTO: SendOtpDTO) {
-  //   const { email } = sendOtpDTO;
-  //   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  async sendOtp(sendOtpDTO: SendOtpDTO) {
+    const { email } = sendOtpDTO;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  //   await this.mailService.sendOtp(email, 'Your OTP code', { otp });
+    await this.mailService.sendOtp(email, 'Your OTP code', { otp });
 
-  //   const redisName = `otp:${sanitizeEmail(email)}`;
-  //   const redis = this.redisService.getClient();
-  //   await redis.set(redisName, otp, 'EX', 60 * 15);
-  //   return true;
-  // }
+    const redisName = `otp:${sanitizeEmail(email)}`;
+    const redis = this.redisService.getClient();
+    await redis.set(redisName, otp, 'EX', 60 * 15);
+    return true;
+  }
 
-  // async verifyOtp(verifyOtpDTO: VerifyOtpDTO) {
-  //   const { email, otp } = verifyOtpDTO;
-  //   const redisName = `otp:${sanitizeEmail(email)}`;
-  //   const redis = this.redisService.getClient();
-  //   const storedOtp = await redis.get(redisName);
-  //   if (storedOtp !== otp) {
-  //     throw new HttpException(
-  //       { message: 'Invalid OTP' },
-  //       HttpStatus.UNAUTHORIZED,
-  //     );
-  //   }
-  //   return true;
-  // }
+  async verifyOtp(verifyOtpDTO: VerifyOtpDTO) {
+    const { email, otp } = verifyOtpDTO;
+    const redisName = `otp:${sanitizeEmail(email)}`;
+    const redis = this.redisService.getClient();
+    const storedOtp = await redis.get(redisName);
+    if (storedOtp !== otp) {
+      throw new HttpException(
+        { message: 'Invalid OTP' },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    return true;
+  }
 
   async changePassword(changePasswordDTO: ChangePasswordDTO) {
     const { email, newPassword } = changePasswordDTO;
