@@ -6,7 +6,6 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserSubscription } from './userSubcription.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
-import { RequestUpdate } from 'src/request-update/entities/request-update.entity';
 
 @Entity()
 export class User {
@@ -22,7 +21,7 @@ export class User {
   @Column({ nullable: true })
   phoneNumber: string;
 
-  @Column({ nullable: true })
+  @Column()
   password: string;
 
   @Column({ nullable: true })
@@ -66,7 +65,4 @@ export class User {
 
   @OneToMany(() => Payment, (payment) => payment.user)
   payments: Payment[];
-
-  @OneToMany(() => RequestUpdate, (requestUpdate) => requestUpdate.user)
-  requestUpdates: RequestUpdate[];
 }

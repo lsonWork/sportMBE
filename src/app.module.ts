@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RedisModule } from './redis/redis.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config'; // Thêm ConfigService
 import { SportTypeModule } from './sport-type/sport-type.module';
 import { CourtModule } from './court/court.module';
 import { FeedbackModule } from './feedback/feedback.module';
@@ -14,17 +15,14 @@ import { BookingModule } from './booking/booking.module';
 import { PaymentModule } from './payment/payment.module';
 import { FriendRequestModule } from './friend-request/friend-request.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-
 
 // Các import được thêm vào cho Mailer
-import { MailModule } from './mail/mail.module';
-import { RolesGuard } from './common/guards/role.guard';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { RequestUpdateModule } from './request-update/request-update.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     RedisModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -35,8 +33,32 @@ import { RequestUpdateModule } from './request-update/request-update.module';
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true,
       synchronize: false,
-      logging: true,
     }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: 'smtp.gmail.com',
+          secure: false,
+          auth: {
+            user: configService.get<string>('EMAIL_USER'),
+            pass: configService.get<string>('EMAIL_PASSWORD'),
+          },
+        },
+        defaults: {
+          from: '"SportMBE No Reply" <noreply@sportmbe.com>',
+        },
+        template: {
+          dir: process.cwd() + '/src/templates/',
+          adapter: new PugAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }),
+    }),
+
     SportTypeModule,
     CourtModule,
     FeedbackModule,
@@ -48,13 +70,8 @@ import { RequestUpdateModule } from './request-update/request-update.module';
     PaymentModule,
     FriendRequestModule,
     AuthModule,
-    MailModule,
-    RequestUpdateModule,
   ],
   controllers: [AppController],
-  providers: [AppService, RolesGuard,{
-    provide: APP_GUARD,
-    useClass: JwtAuthGuard,
-  },],
+  providers: [AppService],
 })
 export class AppModule {}
