@@ -16,7 +16,6 @@ import { FriendRequestModule } from './friend-request/friend-request.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 
-
 // Các import được thêm vào cho Mailer
 import { MailModule } from './mail/mail.module';
 import { RolesGuard } from './common/guards/role.guard';
@@ -52,9 +51,13 @@ import { RequestUpdateModule } from './request-update/request-update.module';
     RequestUpdateModule,
   ],
   controllers: [AppController],
-  providers: [AppService, RolesGuard,{
-    provide: APP_GUARD,
-    useClass: JwtAuthGuard,
-  },],
+  providers: [
+    AppService,
+    RolesGuard,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
