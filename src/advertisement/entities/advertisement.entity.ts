@@ -27,15 +27,6 @@ export class Advertisement {
   @Column()
   endDate: Date;
 
-  @Column()
-  status: boolean;
-
-  @Column({ nullable: true })
-  displayOrder: string;
-
-  @Column({ nullable: true })
-  displayHome: boolean;
-
   @ManyToOne(() => User, (user) => user.advertisements)
   @JoinColumn({ name: 'ownerId' })
   owner: User;
