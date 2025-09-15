@@ -129,6 +129,40 @@ export class CourtService {
     return paginate<Court>(queryBuilder, options);
   }
 
+  async paginateForOwner(
+    ownerId: string, // Tham số bắt buộc để lọc theo chủ sân
+    options: IPaginationOptions,
+    sportTypeId?: string,
+    search?: string,
+  ): Promise<Pagination<Court>> {
+    const queryBuilder = this.courtRepository.createQueryBuilder('court');
+
+    queryBuilder
+      .leftJoinAndSelect('court.sportType', 'sportType')
+      .leftJoinAndSelect('court.courtImages', 'courtImages')
+      // Điều kiện chính: Lọc các sân thuộc về đúng ownerId
+      .where('court.ownerId = :ownerId', { ownerId })
+      .orderBy('court.courtName', 'ASC');
+
+    // Thêm điều kiện lọc nếu có sportTypeId
+    if (sportTypeId) {
+      queryBuilder.andWhere('sportType.sportTypeId = :sportTypeId', {
+        sportTypeId,
+      });
+    }
+
+    // Thêm điều kiện tìm kiếm nếu có chuỗi search
+    if (search) {
+      queryBuilder.andWhere(
+        '(court.courtName ILIKE :search OR court.description ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    // Trả về kết quả đã phân trang
+    return paginate<Court>(queryBuilder, options);
+  }
+
   async deleteCourtDto(owner: User, courtId: string): Promise<void> {
     const court = await this.courtRepository.findOne({
       where: { courtId: courtId },
