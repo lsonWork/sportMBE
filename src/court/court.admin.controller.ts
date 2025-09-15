@@ -23,7 +23,7 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { CourtDto } from './DTO/courtDto';
 import { plainToClass } from 'class-transformer';
 
-@Controller('court')
+@Controller('owner/courts')
 export class CourtController {
   constructor(private readonly courtService: CourtService) {}
   @ApiBearerAuth('access-token')
@@ -115,21 +115,24 @@ export class CourtController {
   @Get('/')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
-  async findAll(
+  async findMyCourts(
+    @Request() req,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
     @Query('sportTypeId') sportTypeId?: string,
     @Query('search') search?: string,
   ): Promise<Pagination<CourtDto>> {
     limit = limit > 100 ? 100 : limit;
-    const courtPage = await this.courtService.paginate(
+    const loggedInUser = req.user;
+    const courtPage = await this.courtService.paginateForOwner(
+      loggedInUser.id,
       { page, limit },
       sportTypeId,
       search,
     );
     const transformedItems = courtPage.items.map((court) =>
       plainToClass(CourtDto, court, {
-        excludeExtraneousValues: true, // Rất quan trọng!
+        excludeExtraneousValues: true,
       }),
     );
 
