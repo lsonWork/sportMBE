@@ -90,7 +90,10 @@ export class BookingService {
       );
     }
     // (PENDING_DEPOSIT hoặc false)
-    if (booking.status === true) {
+    if (
+      booking.status === BookingStatus.PENDING_DEPOSIT ||
+      booking.status === BookingStatus.CANCELLED
+    ) {
       throw new HttpException(
         { message: 'This booking has already been confirmed or cancelled.' },
         HttpStatus.BAD_REQUEST,
@@ -103,7 +106,7 @@ export class BookingService {
       depositPayment.paymentStatus = 'SUCCESS'; // Giả sử enum PaymentStatus có SUCCESS
       await this.paymentRepository.save(depositPayment);
     }
-    booking.status = true; // Hoặc booking.status = BookingStatus.CONFIRMED;
+    booking.status = BookingStatus.CONFIRMED;
     return this.bookingRepository.save(booking);
   }
 
@@ -153,8 +156,7 @@ export class BookingService {
     await this.paymentRepository.save(finalPayment);
 
     // 5. Cập nhật trạng thái booking thành 'COMPLETED'
-    // booking.status = BookingStatus.COMPLETED;
-    booking.status = true;
+    booking.status = BookingStatus.COMPLETED;
 
     // 6. Lưu và trả về
     return this.bookingRepository.save(booking);

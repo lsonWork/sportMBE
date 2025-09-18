@@ -1,3 +1,4 @@
+import { Court } from 'src/court/entities/court.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -27,7 +28,7 @@ export class Booking {
   totalPrice: number;
 
   @Column()
-  status: boolean;
+  status: string;
 
   @Column()
   deposit: number;
@@ -44,4 +45,8 @@ export class Booking {
 
   @OneToOne(() => Payment, (payment) => payment.booking)
   payment: Payment;
+
+  @ManyToOne(() => Court, (court) => court.bookings)
+  @JoinColumn({ name: 'courtId' })
+  court: Court;
 }
