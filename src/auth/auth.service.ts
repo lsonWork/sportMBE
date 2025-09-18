@@ -112,13 +112,19 @@ export class AuthService {
     };
   }
 
-  async sendOtp(sendOtpDTO: SendOtpDTO) {
+  async sendOtp(sendOtpDTO: SendOtpDTO, type: 'signup' | 'forgot-password') {
     const { email } = sendOtpDTO;
     const user = await this.userRepository.findOneBy({ email });
-    if (user) {
+    if (type === 'signup' && user) {
       throw new HttpException(
         { message: 'User has already been used' },
         HttpStatus.CONFLICT,
+      );
+    }
+    if (type === 'forgot-password' && !user) {
+      throw new HttpException(
+        { message: 'User not found' },
+        HttpStatus.NOT_FOUND,
       );
     }
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
