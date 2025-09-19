@@ -7,6 +7,7 @@ import { UserSubscription } from './userSubcription.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { RequestUpdate } from 'src/request-update/entities/request-update.entity';
+import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 
 @Entity()
 export class User {
@@ -69,4 +70,7 @@ export class User {
 
   @OneToMany(() => RequestUpdate, (requestUpdate) => requestUpdate.user)
   requestUpdates: RequestUpdate[];
+
+  @OneToMany(() => BookingInvitee, (invitee) => invitee.user)
+  bookingInvitations: BookingInvitee[];
 }
