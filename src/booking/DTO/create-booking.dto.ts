@@ -1,4 +1,10 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateBookingDto {
   @IsUUID()
@@ -13,7 +19,8 @@ export class CreateBookingDto {
   @IsNotEmpty()
   endTime: string;
 
-  @IsOptional() // Cho phép trường này có thể không được gửi lên
-  @IsUUID() // Nếu có, phải là một UUID hợp lệ
-  inviteeId?: string;
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true, message: 'Mỗi inviteeId phải là một UUID hợp lệ' })
+  inviteeIds?: string[]; // Đổi thành một mảng các chuỗi UUID
 }
