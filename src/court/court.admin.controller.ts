@@ -54,8 +54,8 @@ export class CourtController {
           ],
           example: '123e4567-e89b-12d3-a456-426614174000',
         },
-        lat: { type: 'number', example: 10.123456 },
-        lng: { type: 'number', example: 20.123456 },
+        lat: { type: 'string', example: '10.123456' },
+        lng: { type: 'string', example: '20.123456' },
         description: { type: 'string', example: 'asjdbaskdb' },
         pricePerHour: { type: 'double', example: 100 },
         subService: { type: 'string', example: 'Thue vot' },
@@ -139,7 +139,7 @@ export class CourtController {
     limit = limit > 100 ? 100 : limit;
     const loggedInUser = req.user;
     const courtPage = await this.courtService.paginateForOwner(
-      loggedInUser.id,
+      loggedInUser.userId,
       { page, limit },
       sportTypeId,
       search,

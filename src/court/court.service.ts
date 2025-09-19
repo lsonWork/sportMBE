@@ -53,6 +53,8 @@ export class CourtService {
       owner: owner,
       isActive: true,
       sportType: sportType,
+      lat: createCourtDto.lat,
+      lng: createCourtDto.lng,
     });
     try {
       const result = await this.courtRepository.save(newCourt);
@@ -130,7 +132,7 @@ export class CourtService {
   }
 
   async paginateForOwner(
-    ownerId: string, // Tham số bắt buộc để lọc theo chủ sân
+    ownerId: string,
     options: IPaginationOptions,
     sportTypeId?: string,
     search?: string,
@@ -140,11 +142,9 @@ export class CourtService {
     queryBuilder
       .leftJoinAndSelect('court.sportType', 'sportType')
       .leftJoinAndSelect('court.courtImages', 'courtImages')
-      // Điều kiện chính: Lọc các sân thuộc về đúng ownerId
       .where('court.ownerId = :ownerId', { ownerId })
       .orderBy('court.courtName', 'ASC');
 
-    // Thêm điều kiện lọc nếu có sportTypeId
     if (sportTypeId) {
       queryBuilder.andWhere('sportType.sportTypeId = :sportTypeId', {
         sportTypeId,
@@ -158,7 +158,6 @@ export class CourtService {
         { search: `%${search}%` },
       );
     }
-
     // Trả về kết quả đã phân trang
     return paginate<Court>(queryBuilder, options);
   }
