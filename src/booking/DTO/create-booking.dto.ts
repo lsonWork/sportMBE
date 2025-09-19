@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateBookingDto {
   @IsUUID()
@@ -12,4 +12,8 @@ export class CreateBookingDto {
   @IsDateString()
   @IsNotEmpty()
   endTime: string;
+
+  @IsOptional() // Cho phép trường này có thể không được gửi lên
+  @IsUUID() // Nếu có, phải là một UUID hợp lệ
+  inviteeId?: string;
 }

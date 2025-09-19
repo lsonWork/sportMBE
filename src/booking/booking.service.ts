@@ -9,6 +9,7 @@ import { User } from 'src/user/entities/user.entity';
 import { BookingStatus } from 'src/common/enum/BookingStatus';
 import { Role } from 'src/common/enum/Role';
 import { CompleteBookingDto } from './DTO/complete-booking.dto';
+import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 
 @Injectable()
 export class BookingService {
@@ -46,7 +47,7 @@ export class BookingService {
     const deposit = totalPrice * 0.2;
 
     const newBooking = this.bookingRepository.create({
-      courtId: court.courtId, //Sửa sau khi viết migration
+      court,
       user,
       startTime: startDate,
       endTime: endDate,
@@ -58,8 +59,8 @@ export class BookingService {
 
     const depositPayment = this.paymentRepository.create({
       amount: deposit,
-      paymentMethod: 'DEPOSIT',
-      paymentStatus: 'PENDING',
+      paymentMethod: 'BANK_TRANSFER',
+      paymentStatus: PaymentStatus.PENDING,
       booking: savedBooking,
       user: user,
     });
@@ -89,7 +90,6 @@ export class BookingService {
         HttpStatus.FORBIDDEN,
       );
     }
-    // (PENDING_DEPOSIT hoặc false)
     if (
       booking.status === BookingStatus.PENDING_DEPOSIT ||
       booking.status === BookingStatus.CANCELLED
@@ -103,7 +103,7 @@ export class BookingService {
       booking: { bookingId },
     });
     if (depositPayment) {
-      depositPayment.paymentStatus = 'SUCCESS'; // Giả sử enum PaymentStatus có SUCCESS
+      depositPayment.paymentStatus = PaymentStatus.SUCCESS;
       await this.paymentRepository.save(depositPayment);
     }
     booking.status = BookingStatus.CONFIRMED;
@@ -143,22 +143,16 @@ export class BookingService {
         HttpStatus.BAD_REQUEST,
       );
     }
-
-    // 4. Tạo record thanh toán cho khoản còn lại
     const remainingAmount = booking.totalPrice - booking.deposit;
     const finalPayment = this.paymentRepository.create({
       amount: remainingAmount,
       paymentMethod: completeBookingDto.finalPaymentMethod,
-      paymentStatus: 'SUCCESS', // Giao dịch này thành công ngay tại chỗ
+      paymentStatus: PaymentStatus.SUCCESS,
       booking: booking,
       user: booking.user,
     });
     await this.paymentRepository.save(finalPayment);
-
-    // 5. Cập nhật trạng thái booking thành 'COMPLETED'
     booking.status = BookingStatus.COMPLETED;
-
-    // 6. Lưu và trả về
     return this.bookingRepository.save(booking);
   }
 
@@ -179,8 +173,6 @@ export class BookingService {
         HttpStatus.NOT_FOUND,
       );
     }
-
-    // 2. Kiểm tra quyền: CHỈ người tạo booking mới được hủy
     if (booking.user.userId !== currentUser.userId) {
       throw new HttpException(
         {
@@ -189,8 +181,6 @@ export class BookingService {
         HttpStatus.FORBIDDEN,
       );
     }
-
-    // 3. Kiểm tra trạng thái: Không thể hủy booking đã hoàn tất hoặc đã bị hủy
     if (
       booking.status === BookingStatus.COMPLETED ||
       booking.status === BookingStatus.CANCELLED
@@ -203,10 +193,8 @@ export class BookingService {
       );
     }
 
-    // 4. Cập nhật trạng thái booking thành 'CANCELLED'
     booking.status = BookingStatus.CANCELLED;
 
-    // 5. Lưu và trả về
     return this.bookingRepository.save(booking);
   }
 }
