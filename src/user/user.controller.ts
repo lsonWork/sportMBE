@@ -14,9 +14,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-// import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/common/enum/Role';
-// import { RolesGuard } from 'src/auth/roles.guard';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { plainToClass } from 'class-transformer';
 import { UserResponseDTO } from './DTO/UserDTO';
@@ -24,7 +22,7 @@ import { UpdateStatusDto } from './DTO/UpdateStatusDto';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
@@ -34,8 +32,19 @@ export class UserController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
-  //   @Roles(Role.ADMIN) // Chỉ định vai trò được phép
-  //   @UseGuards(RolesGuard) // Kích hoạt Guard kiểm tra vai trò
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    type: String,
+    example: 'ADMIN/OWNER/CLIENT',
+    description: 'Vai trò của người dùng',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,

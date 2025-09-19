@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CourtService } from './court.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Role as RoleEnum } from 'src/common/enum/Role';
@@ -21,7 +21,18 @@ export class CourtPublicController {
 
   @ApiBearerAuth('access-token')
   @Get('/')
-  @UseGuards(RolesGuard)
+  @ApiQuery({
+    name: 'sportTypeId',
+    required: false,
+    type: String,
+    description: 'ID của loại hình thể thao',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
