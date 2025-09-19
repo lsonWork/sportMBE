@@ -46,7 +46,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('send-otp')
+  @Post('send-otp-signup')
   @ApiBody({
     schema: {
       type: 'object',
@@ -55,8 +55,26 @@ export class AuthController {
       },
     },
   })
-  async sendOtp(@Body() sendOtpDTO: SendOtpDTO) {
-    const result = await this.authService.sendOtp(sendOtpDTO);
+  async sendOtpSignup(@Body() sendOtpDTO: SendOtpDTO) {
+    const result = await this.authService.sendOtp(sendOtpDTO, 'signup');
+    return result;
+  }
+
+  @Public()
+  @Post('send-otp-forgot-password')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string', example: 'user@example.com' },
+      },
+    },
+  })
+  async sendOtpForgotPassword(@Body() sendOtpDTO: SendOtpDTO) {
+    const result = await this.authService.sendOtp(
+      sendOtpDTO,
+      'forgot-password',
+    );
     return result;
   }
 
