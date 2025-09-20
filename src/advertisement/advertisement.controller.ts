@@ -26,6 +26,7 @@ export class AdvertisementController {
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
+  @Roles(RoleEnum.ADMIN)
   @ApiBody({
     schema: {
       type: 'object',
@@ -52,6 +53,7 @@ export class AdvertisementController {
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
+  @Roles(RoleEnum.ADMIN)
   @Get()
   @ApiQuery({
     name: 'page',
