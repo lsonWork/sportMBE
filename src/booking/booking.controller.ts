@@ -40,6 +40,12 @@ export class BookingController {
           description: 'Thời gian kết thúc đặt sân (định dạng ISO 8601)',
           example: '2025-09-21T11:00:00.000Z',
         },
+        bookingDate: {
+          type: 'string',
+          format: 'date-time',
+          description: 'Thời gian đặt sân (định dạng ISO 8601)',
+          example: '2025-09-21T11:00:00.000Z',
+        },
         inviteeIds: {
           type: 'array',
           description: '(Tùy chọn) Mảng ID của những người bạn muốn mời',

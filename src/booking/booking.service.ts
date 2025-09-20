@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, Repository } from 'typeorm';
 import { Booking } from './entities/booking.entity';
 import { Court } from 'src/court/entities/court.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
@@ -28,7 +28,8 @@ export class BookingService {
     createBookingDto: CreateBookingDto,
     user: User,
   ): Promise<Booking> {
-    const { courtId, startTime, endTime, inviteeIds } = createBookingDto;
+    const { courtId, startTime, endTime, inviteeIds, bookingDate } =
+      createBookingDto;
 
     const court = await this.courtRepository.findOneBy({ courtId: courtId });
     if (!court) {
@@ -37,10 +38,34 @@ export class BookingService {
         HttpStatus.NOT_FOUND,
       );
     }
-    // (Logic kiểm tra xung đột lịch nên được thêm ở đây)
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);
     const durationInHours = (endDate.getTime() - startDate.getTime()) / 3600000;
+
+    const existingBooking = await this.bookingRepository
+      .createQueryBuilder('booking')
+      .where('booking.courtId = :courtId', { courtId })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('booking.status = :confirmed', {
+            confirmed: BookingStatus.CONFIRMED,
+          }).orWhere('booking.status = :pending', {
+            pending: BookingStatus.PENDING_DEPOSIT,
+          });
+        }),
+      )
+      .andWhere(
+        ':startTime < booking.endTime AND :endTime > booking.startTime',
+        { startTime: startDate, endTime: endDate },
+      )
+      .getOne();
+
+    if (existingBooking) {
+      throw new HttpException(
+        { message: 'The selected time slot is already booked or pending.' },
+        HttpStatus.CONFLICT,
+      );
+    }
     if (durationInHours <= 0) {
       throw new HttpException(
         { message: 'End time must be after start time.' },
@@ -50,7 +75,7 @@ export class BookingService {
     const totalPrice = durationInHours * court.pricePerHour;
     const deposit = totalPrice * 0.2;
 
-    // Bắt đầu một transaction
+    // Dung transaction de dam bao tinh toan va luu tru du lieu dung dan
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -65,7 +90,7 @@ export class BookingService {
         totalPrice,
         deposit,
         status: BookingStatus.PENDING_DEPOSIT,
-        bookingDate: new Date(),
+        bookingDate: bookingDate,
       });
       const savedBooking = await queryRunner.manager.save(newBooking);
       if (inviteeIds && inviteeIds.length > 0) {
