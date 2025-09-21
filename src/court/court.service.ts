@@ -29,48 +29,48 @@ export class CourtService {
     private sportTypeRepository: Repository<SportType>,
   ) {}
 
-  // async createCourt(
-  //   createCourtDto: CreateCourtRequestDto,
-  //   owner: User,
-  // ): Promise<Court> {
-  //   if (owner.role !== Role.OWNER) {
-  //     throw new HttpException(
-  //       { message: 'Only owners can create courts' },
-  //       HttpStatus.FORBIDDEN,
-  //     );
-  //   }
-  //   const sportType = await this.sportTypeRepository.findOne({
-  //     where: { sportTypeId: createCourtDto.sportType },
-  //   });
-  //   if (!sportType) {
-  //     throw new HttpException(
-  //       { message: 'Sport type not found' },
-  //       HttpStatus.NOT_FOUND,
-  //     );
-  //   }
-  //   const newCourt = this.courtRepository.create({
-  //     courtName: createCourtDto.name,
-  //     address: createCourtDto.address,
-  //     description: createCourtDto.description,
-  //     pricePerHour: createCourtDto.pricePerHour,
-  //     subService: createCourtDto.subService,
-  //     owner: owner,
-  //     isActive: true,
-  //     sportType: sportType,
-  //     lat: createCourtDto.lat,
-  //     lng: createCourtDto.lng,
-  //   });
-  //   try {
-  //     const result = await this.courtRepository.save(newCourt);
-  //     return result;
-  //   } catch (error) {
-  //     const err = error as Error;
-  //     throw new HttpException(
-  //       { message: err.message || 'Error creating court' },
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
+  async createCourt(
+    createCourtDto: CreateCourtRequestDto,
+    owner: User,
+  ): Promise<Court> {
+    if (owner.role !== Role.OWNER) {
+      throw new HttpException(
+        { message: 'Only owners can create courts' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const sportType = await this.sportTypeRepository.findOne({
+      where: { sportTypeId: createCourtDto.sportType },
+    });
+    if (!sportType) {
+      throw new HttpException(
+        { message: 'Sport type not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const newCourt = this.courtRepository.create({
+      courtName: createCourtDto.name,
+      address: createCourtDto.address,
+      description: createCourtDto.description,
+      pricePerHour: createCourtDto.pricePerHour,
+      subService: createCourtDto.subService,
+      owner: owner,
+      isActive: true,
+      sportType: sportType,
+      lat: createCourtDto.lat,
+      lng: createCourtDto.lng,
+    });
+    try {
+      const result = await this.courtRepository.save(newCourt);
+      return result;
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(
+        { message: err.message || 'Error creating court' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   async updateCourt(
     @Param() id: string,

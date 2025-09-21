@@ -2,6 +2,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsNotEmpty,
+  IsNumber,
   IsString,
   IsUUID,
 } from 'class-validator';
@@ -35,11 +36,11 @@ export class CreateCourtRequestDto {
   @IsNotEmpty({ message: 'Sub-service is required' })
   subService: string;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty({ message: 'Latitude is required' })
-  lat: string;
+  lat: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty({ message: 'Longitude is required' })
-  lng: string;
+  lng: number;
 }
