@@ -21,6 +21,7 @@ import { MailModule } from './mail/mail.module';
 import { RolesGuard } from './common/guards/role.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RequestUpdateModule } from './request-update/request-update.module';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { RequestUpdateModule } from './request-update/request-update.module';
     AuthModule,
     MailModule,
     RequestUpdateModule,
+    FriendModule,
   ],
   controllers: [AppController],
   providers: [
