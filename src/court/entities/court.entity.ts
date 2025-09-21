@@ -1,7 +1,6 @@
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
-  Double,
   Entity,
   JoinColumn,
   ManyToOne,
