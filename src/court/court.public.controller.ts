@@ -14,6 +14,8 @@ import { Role as RoleEnum } from 'src/common/enum/Role';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { CourtDto } from './DTO/courtDto';
 import { plainToClass } from 'class-transformer';
+import { Public } from 'src/auth/public.decorator';
+import { Double } from 'typeorm';
 
 @Controller('courts')
 export class CourtPublicController {
@@ -52,5 +54,15 @@ export class CourtPublicController {
     );
 
     return new Pagination<CourtDto>(transformedItems, courtPage.meta);
+  }
+
+  @Public()
+  @Get('near-by')
+  async findOne(@Query('lat') lat: string, @Query('lng') lng: string) {
+    const court = await this.courtService.findNearBy(
+      Number.parseFloat(lat),
+      Number.parseFloat(lng),
+    );
+    return court;
   }
 }

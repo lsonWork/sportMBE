@@ -1,6 +1,7 @@
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
+  Double,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -35,11 +36,11 @@ export class Court {
   @Column()
   subService: string;
 
-  @Column()
-  lat: string;
+  @Column({ type: 'double precision' })
+  lat: number;
 
-  @Column()
-  lng: string;
+  @Column({ type: 'double precision' })
+  lng: number;
 
   @ManyToOne(() => User, (user) => user.courts)
   @JoinColumn({ name: 'ownerId' })
