@@ -1,11 +1,9 @@
 import {
   Body,
   Controller,
-  Get,
   Param,
   ParseUUIDPipe,
   Patch,
-  Post,
   UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
@@ -13,8 +11,9 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Role as RoleEnum } from 'src/common/enum/Role';
-import { Request } from '@nestjs/common';
 import { CompleteBookingDto } from './DTO/complete-booking.dto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('owner/bookings')
 export class BookingOwnerController {
@@ -24,9 +23,11 @@ export class BookingOwnerController {
   @Patch(':id/confirm')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
-  async confirm(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = req.user;
-    return this.bookingService.confirmBooking(id, user);
+  async confirm(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: JwtUser,
+  ) {
+    return this.bookingService.confirmBooking(id, user.userId);
   }
 
   @ApiBearerAuth('access-token')
@@ -36,9 +37,12 @@ export class BookingOwnerController {
   async complete(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() completeBookingDto: CompleteBookingDto,
-    @Request() req,
+    @GetUser() user: JwtUser,
   ) {
-    const user = req.user; // Lấy chủ sân/admin đang đăng nhập
-    return this.bookingService.completeBooking(id, completeBookingDto, user);
+    return this.bookingService.completeBooking(
+      id,
+      completeBookingDto,
+      user.userId,
+    );
   }
 }

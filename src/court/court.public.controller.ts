@@ -4,18 +4,13 @@ import {
   Get,
   ParseIntPipe,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { CourtService } from './court.service';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/role.decorator';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { Role as RoleEnum } from 'src/common/enum/Role';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { CourtDto } from './DTO/courtDto';
 import { plainToClass } from 'class-transformer';
 import { Public } from 'src/auth/public.decorator';
-import { Double } from 'typeorm';
 
 @Controller('courts')
 export class CourtPublicController {

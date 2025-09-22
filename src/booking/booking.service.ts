@@ -26,11 +26,17 @@ export class BookingService {
 
   async createBooking(
     createBookingDto: CreateBookingDto,
-    user: User,
+    userId: string,
   ): Promise<Booking> {
     const { courtId, startTime, endTime, inviteeIds, bookingDate } =
       createBookingDto;
-
+    const user = await this.userRepository.findOneBy({ userId: userId });
+    if (!user) {
+      throw new HttpException(
+        { message: 'User not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const court = await this.courtRepository.findOneBy({ courtId: courtId });
     if (!court) {
       throw new HttpException(
@@ -135,7 +141,14 @@ export class BookingService {
     }
   }
 
-  async confirmBooking(bookingId: string, currentUser: User): Promise<Booking> {
+  async confirmBooking(bookingId: string, userId: string): Promise<Booking> {
+    const currentUser = await this.userRepository.findOneBy({ userId });
+    if (!currentUser) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const booking = await this.bookingRepository.findOne({
       where: { bookingId: bookingId },
       relations: ['user'],
@@ -179,8 +192,15 @@ export class BookingService {
   async completeBooking(
     bookingId: string,
     completeBookingDto: CompleteBookingDto,
-    currentUser: User,
+    userId: string,
   ): Promise<Booking> {
+    const currentUser = await this.userRepository.findOneBy({ userId });
+    if (!currentUser) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const booking = await this.bookingRepository.findOne({
       where: { bookingId },
       relations: ['court', 'court.owner'],
@@ -224,8 +244,15 @@ export class BookingService {
 
   async cancelBookingByUser(
     bookingId: string,
-    currentUser: User,
+    userId: string,
   ): Promise<Booking> {
+    const currentUser = await this.userRepository.findOneBy({ userId });
+    if (!currentUser) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const booking = await this.bookingRepository.findOne({
       where: { bookingId },
       relations: ['user'],
