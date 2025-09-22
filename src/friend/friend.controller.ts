@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
@@ -24,8 +24,8 @@ export class FriendController {
     return this.friendService.getMyFriend(user.userId, page, limit, search);
   }
 
-  @Delete()
-  deleteFriend(@GetUser() user: JwtUser, @Query('id') id: string) {
-    // return this.friendService.deleteFriend(user.userId, id);
+  @Delete(':id')
+  deleteFriend(@GetUser() user: JwtUser, @Param('id') id: string) {
+    return this.friendService.deleteFriend(user.userId, id);
   }
 }

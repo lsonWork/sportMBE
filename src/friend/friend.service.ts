@@ -51,4 +51,23 @@ export class FriendService {
 
     return { friends, totalItems, totalPages };
   }
+
+  async deleteFriend(userId: string, friendId: string) {
+    const friend = await this.friendRepository.findOne({
+      where: [
+        {
+          fromId: userId,
+          toId: friendId,
+        },
+        {
+          fromId: friendId,
+          toId: userId,
+        },
+      ],
+    });
+    if (!friend) {
+      throw new Error('Friend not found');
+    }
+    await this.friendRepository.remove(friend);
+  }
 }
