@@ -22,13 +22,15 @@ export class AdvertisementService {
       ...createAdvertisementDto,
       owner: { userId },
       status: true,
+      createdAt: new Date(),
     });
     return await this.advertisementRepository.save(newAds);
   }
 
   async findAll(page: number, limit: number, search?: string) {
-    const queryBuilder =
-      this.advertisementRepository.createQueryBuilder('advertisement');
+    const queryBuilder = this.advertisementRepository
+      .createQueryBuilder('advertisement')
+      .orderBy('advertisement.createdAt', 'DESC');
     if (search) {
       queryBuilder.andWhere('advertisement.title ILIKE :search', {
         search: `%${search}%`,

@@ -17,6 +17,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { EditSportTypeDto } from './DTO/EditSportTypeDto';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('sport-type')
 export class SportTypeController {
@@ -40,9 +41,10 @@ export class SportTypeController {
     return result;
   }
 
-  @ApiBearerAuth('access-token')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
+  // @ApiBearerAuth('access-token')
+  // @UseGuards(RolesGuard)
+  // @Roles(RoleEnum.ADMIN)
+  @Public()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })

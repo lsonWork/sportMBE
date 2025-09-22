@@ -25,8 +25,7 @@ export class AdvertisementController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
-  @Roles(RoleEnum.ADMIN)
+  @Roles(RoleEnum.OWNER, RoleEnum.ADMIN)
   @ApiBody({
     schema: {
       type: 'object',
@@ -52,19 +51,18 @@ export class AdvertisementController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
   @Roles(RoleEnum.ADMIN)
   @Get()
   @ApiQuery({
     name: 'page',
-    required: false,
+    required: true,
     type: Number,
     example: 1,
     description: 'Trang hiện tại',
   })
   @ApiQuery({
     name: 'limit',
-    required: false,
+    required: true,
     type: Number,
     example: 10,
     description: 'Số item mỗi trang',
@@ -112,6 +110,7 @@ export class AdvertisementController {
   })
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
+  @Roles(RoleEnum.ADMIN)
   @Patch(':advertisementId')
   updateAdvertisement(
     @Param('advertisementId') advertisementId: string,

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FriendRequest } from 'src/friend-request/entities/friendRequest.entity';
 import { Repository } from 'typeorm';
 import { FriendDTO } from './DTO/FriendDTO';
+import { validate as isUuid } from 'uuid';
 
 @Injectable()
 export class FriendService {
@@ -53,6 +54,9 @@ export class FriendService {
   }
 
   async deleteFriend(userId: string, friendId: string) {
+    if (!isUuid(friendId)) {
+      throw new HttpException('Invalid friend ID', 400);
+    }
     const friend = await this.friendRepository.findOne({
       where: [
         {
@@ -66,8 +70,8 @@ export class FriendService {
       ],
     });
     if (!friend) {
-      throw new Error('Friend not found');
+      throw new HttpException('Friend not found', 404);
     }
-    await this.friendRepository.remove(friend);
+    return await this.friendRepository.remove(friend);
   }
 }

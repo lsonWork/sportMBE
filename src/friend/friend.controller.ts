@@ -1,8 +1,15 @@
-import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
@@ -15,6 +22,9 @@ export class FriendController {
   constructor(private readonly friendService: FriendService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', type: Number, required: true })
+  @ApiQuery({ name: 'limit', type: Number, required: true })
+  @ApiQuery({ name: 'search', type: String, required: false })
   getMyFriend(
     @GetUser() user: JwtUser,
     @Query('page') page: number,
