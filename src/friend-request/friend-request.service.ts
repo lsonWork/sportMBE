@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { CreateFriendRequestDTO } from './DTO/CreateFriendRequestDTO';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FriendRequest } from './entities/friendRequest.entity';
@@ -21,6 +21,19 @@ export class FriendRequestService {
 
     if (!isUuid(toId)) {
       throw new Error('Invalid toId');
+    }
+
+    const existRequest = await this.friendRequestRepository.findOneBy({
+      fromId,
+      toId,
+    });
+
+    if (!existRequest?.status) {
+      throw new HttpException('Friend request already exists', 400);
+    }
+
+    if (existRequest?.status) {
+      throw new HttpException('You had add this user before', 400);
     }
 
     const newRequest = this.friendRequestRepository.create({
