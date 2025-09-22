@@ -1,6 +1,6 @@
-import { Expose, Transform, Type } from "class-transformer";
-import { SportTypeResponseDto } from "./sportTypeResponseDto";
-import { CourtImagesResponseDto } from "./courtImagesResponseDto";
+import { Expose, Transform, Type } from 'class-transformer';
+import { SportTypeResponseDto } from './sportTypeResponseDto';
+import { CourtImagesResponseDto } from './courtImagesResponseDto';
 
 export class CourtDto {
   @Expose()

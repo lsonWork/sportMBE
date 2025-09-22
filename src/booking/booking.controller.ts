@@ -9,7 +9,8 @@ import {
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './DTO/create-booking.dto';
 import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { Request } from '@nestjs/common';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('/bookings')
 export class BookingController {
@@ -61,15 +62,19 @@ export class BookingController {
       },
     },
   })
-  async create(@Body() createBookingDto: CreateBookingDto, @Request() req) {
-    const user = req.user;
-    return this.bookingService.createBooking(createBookingDto, user);
+  async create(
+    @Body() createBookingDto: CreateBookingDto,
+    @GetUser() user: JwtUser,
+  ) {
+    return this.bookingService.createBooking(createBookingDto, user.userId);
   }
 
   @ApiBearerAuth('access-token')
   @Patch(':id/cancel-by-user')
-  async cancelByUser(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
-    const user = req.user;
-    return this.bookingService.cancelBookingByUser(id, user);
+  async cancelByUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: JwtUser,
+  ) {
+    return this.bookingService.cancelBookingByUser(id, user.userId);
   }
 }

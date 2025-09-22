@@ -27,12 +27,21 @@ export class CourtService {
     private courtRepository: Repository<Court>,
     @InjectRepository(SportType)
     private sportTypeRepository: Repository<SportType>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async createCourt(
     createCourtDto: CreateCourtRequestDto,
-    owner: User,
+    userId: string,
   ): Promise<Court> {
+    const owner = await this.userRepository.findOneBy({ userId });
+    if (!owner) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     if (owner.role !== Role.OWNER) {
       throw new HttpException(
         { message: 'Only owners can create courts' },
@@ -75,8 +84,15 @@ export class CourtService {
   async updateCourt(
     @Param() id: string,
     @Body() editCourtDto: EditCourtDto,
-    owner: User,
+    userId: string,
   ): Promise<Court> {
+    const owner = await this.userRepository.findOneBy({ userId });
+    if (!owner) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const court = await this.courtRepository.findOne({
       where: { courtId: id },
       relations: ['owner'],
@@ -166,7 +182,14 @@ export class CourtService {
     return paginate<Court>(queryBuilder, options);
   }
 
-  async deleteCourtDto(owner: User, courtId: string): Promise<void> {
+  async deleteCourtDto(userId: string, courtId: string): Promise<void> {
+    const owner = await this.userRepository.findOneBy({ userId });
+    if (!owner) {
+      throw new HttpException(
+        { message: 'Current user not found.' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     const court = await this.courtRepository.findOne({
       where: { courtId: courtId },
       relations: ['owner'],
