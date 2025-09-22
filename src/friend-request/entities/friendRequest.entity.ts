@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { User } from 'src/user/entities/user.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class FriendRequest {
@@ -16,4 +23,14 @@ export class FriendRequest {
 
   @Column()
   createdAt: Date;
+
+  // Quan hệ với User - người gửi
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'fromId' })
+  from: User;
+
+  // Quan hệ với User - người nhận
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'toId' })
+  to: User;
 }
