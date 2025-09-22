@@ -6,7 +6,7 @@ export class SportType {
   @PrimaryGeneratedColumn('uuid')
   sportTypeId: string;
 
-  @Column()
+  @Column({ unique: true })
   typeName: string;
 
   @Column()

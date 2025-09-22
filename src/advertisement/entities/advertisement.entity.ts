@@ -36,6 +36,9 @@ export class Advertisement {
   @Column({ nullable: true })
   displayHome: boolean;
 
+  @Column()
+  createdAt: Date;
+
   @ManyToOne(() => User, (user) => user.advertisements)
   @JoinColumn({ name: 'ownerId' })
   owner: User;
