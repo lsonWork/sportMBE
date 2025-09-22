@@ -7,7 +7,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
 import { CreateBookingDto } from './DTO/create-booking.dto';
 import { User } from 'src/user/entities/user.entity';
 import { BookingStatus } from 'src/common/enum/BookingStatus';
-import { Role } from 'src/common/enum/Role';
+// import { Role } from 'src/common/enum/Role';
 import { CompleteBookingDto } from './DTO/complete-booking.dto';
 import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
@@ -162,7 +162,7 @@ export class BookingService {
     }
     if (
       booking.user.userId !== currentUser.userId &&
-      currentUser.role !== Role.OWNER
+      currentUser.role !== 'OWNER' //Role.OWNER
     ) {
       throw new HttpException(
         { message: 'You do not have permission to confirm this booking.' },
@@ -170,8 +170,8 @@ export class BookingService {
       );
     }
     if (
-      booking.status === BookingStatus.PENDING_DEPOSIT ||
-      booking.status === BookingStatus.CANCELLED
+      booking.status === 'PENDING_DEPOSIT' || //BookingStatus.PENDING_DEPOSIT
+      booking.status === 'CANCELLED' //BookingStatus.CANCELLED
     ) {
       throw new HttpException(
         { message: 'This booking has already been confirmed or cancelled.' },
@@ -214,14 +214,15 @@ export class BookingService {
     }
     if (
       booking.court.owner.userId !== currentUser.userId && // Chủ sân
-      currentUser.role !== Role.OWNER
+      currentUser.role !== 'OWNER' //Role.OWNER
     ) {
       throw new HttpException(
         { message: 'You do not have permission to complete this booking.' },
         HttpStatus.FORBIDDEN,
       );
     }
-    if (booking.status !== BookingStatus.CONFIRMED) {
+    if (booking.status !== 'CONFIRMED') {
+      //BookingStatus.CONFIRMED
       throw new HttpException(
         {
           message: `Booking cannot be completed because its status is '${booking.status}'`,
@@ -275,8 +276,8 @@ export class BookingService {
       );
     }
     if (
-      booking.status === BookingStatus.COMPLETED ||
-      booking.status === BookingStatus.CANCELLED
+      booking.status === 'COMPLETED' || //BookingStatus.COMPLETED
+      booking.status === 'CANCELLED' //BookingStatus.CANCELLED
     ) {
       throw new HttpException(
         {
