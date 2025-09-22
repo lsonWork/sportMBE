@@ -57,27 +57,31 @@ export class AuthService {
   }
 
   async login(loginDTO: LoginDTO) {
-    const { email, password } = loginDTO;
-
-    const user = await this.userRepository.findOneBy({ email });
-    if (user) {
-      if (password) {
-        if (!user.status || !(await bcrypt.compare(password, user.password))) {
-          throw new HttpException(
-            { message: 'Invalid email or password' },
-            HttpStatus.UNAUTHORIZED,
-          );
-        }
-      } else {
+    const { email, password, fullName } = loginDTO;
+    let user = await this.userRepository.findOneBy({ email });
+    if (password) {
+      if (
+        !user ||
+        !user.status ||
+        !(await bcrypt.compare(password, user.password))
+      ) {
+        throw new HttpException(
+          { message: 'Invalid email or password' },
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+    } else {
+      if (!user) {
         const newAccount = {
-          fullName: loginDTO.fullName,
-          email: loginDTO.email,
+          fullName: fullName,
+          email: email,
           status: true,
           role: Role.CLIENT,
         };
-        const user = this.userRepository.create(newAccount);
+
+        const newUserEntity = this.userRepository.create(newAccount);
         try {
-          await this.userRepository.save(user);
+          user = await this.userRepository.save(newUserEntity);
         } catch (error) {
           const err = error as Error;
           throw new HttpException(
@@ -86,11 +90,6 @@ export class AuthService {
           );
         }
       }
-    } else {
-      throw new HttpException(
-        { message: 'Invalid email or password' },
-        HttpStatus.UNAUTHORIZED,
-      );
     }
 
     const payload = { email: user.email, userId: user.userId, role: user.role };
