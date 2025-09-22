@@ -37,8 +37,10 @@ export class SportTypeService {
     limit: number,
     search?: string,
   ): Promise<Pagination<SportType>> {
-    const queryBuilder =
-      this.sportTypeRepository.createQueryBuilder('sportType');
+    const queryBuilder = this.sportTypeRepository
+      .createQueryBuilder('sportType')
+      .orderBy('sportType.status', 'DESC')
+      .addOrderBy('sportType.typeName', 'ASC');
     if (search) {
       queryBuilder.andWhere('sportType.typeName ILIKE :search', {
         search: `%${search}%`,
