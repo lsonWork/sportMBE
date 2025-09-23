@@ -30,8 +30,8 @@ export class Advertisement {
   @Column()
   status: boolean;
 
-  @Column({ nullable: true })
-  displayOrder: string;
+  @Column({ type: 'varchar', nullable: true })
+  displayOrder: string | null;
 
   @Column({ nullable: true })
   displayHome: boolean;
