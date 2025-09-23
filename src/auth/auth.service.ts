@@ -57,7 +57,7 @@ export class AuthService {
   }
 
   async login(loginDTO: LoginDTO) {
-    const { email, password, fullName } = loginDTO;
+    const { email, password, fullName, avatarUrl } = loginDTO;
     let user = await this.userRepository.findOneBy({ email });
     if (password) {
       if (
@@ -77,6 +77,7 @@ export class AuthService {
           email: email,
           status: true,
           role: Role.CLIENT,
+          avatarUrl: avatarUrl,
         };
 
         const newUserEntity = this.userRepository.create(newAccount);
@@ -92,7 +93,13 @@ export class AuthService {
       }
     }
 
-    const payload = { email: user.email, userId: user.userId, role: user.role };
+    const payload = {
+      email: user.email,
+      userId: user.userId,
+      role: user.role,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+    };
     const token = this.jwtService.sign(payload);
 
     return {

@@ -38,6 +38,7 @@ export class AuthController {
         email: { type: 'string', example: 'user@example.com' },
         password: { type: 'string', example: 'P@ssw0rd123' },
         fullName: { type: 'string', example: 'Nguyen Van A' },
+        imgUrl: { type: 'string', example: 'https://example.com/avatar.jpg' },
       },
     },
   })

@@ -15,4 +15,7 @@ export class LoginDTO {
 
   @IsOptional()
   fullName: string;
+
+  @IsOptional()
+  avatarUrl: string;
 }
