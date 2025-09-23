@@ -24,25 +24,30 @@ export class AdvertisementService {
     userId: string,
     createAdvertisementDto: CreateAdvertisementDto,
   ) {
-    const { startDate, endDate } = createAdvertisementDto;
+    const startDate = new Date(createAdvertisementDto.startDate);
+    const endDate = new Date(createAdvertisementDto.endDate);
+
     if (startDate > endDate) {
       throw new HttpException(
-        { message: 'Start date must be before end date' },
+        { message: 'Ngày bắt đầu phải nhỏ hơn ngày kết thúc' },
         HttpStatus.BAD_REQUEST,
       );
     }
-    if (startDate < new Date()) {
+
+    const now = new Date();
+    if (startDate < now) {
       throw new HttpException(
-        { message: 'Start date must be after today' },
+        { message: 'Ngày bắt đầu phải lớn hơn ngày hiện tại' },
         HttpStatus.BAD_REQUEST,
       );
     }
-    if (endDate < new Date()) {
+    if (endDate < now) {
       throw new HttpException(
-        { message: 'End date must be after today' },
+        { message: 'Ngày kết thúc phải lớn hơn ngày hiện tại' },
         HttpStatus.BAD_REQUEST,
       );
     }
+
     const diffInMs = endDate.getTime() - startDate.getTime();
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 

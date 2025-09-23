@@ -20,7 +20,7 @@ export class FriendRequestService {
     const { toId } = createFriendRequestDTO;
 
     if (!isUuid(toId)) {
-      throw new Error('Invalid toId');
+      throw new HttpException('Invalid toId', 400);
     }
 
     const existRequest = await this.friendRequestRepository.findOneBy({
@@ -29,11 +29,11 @@ export class FriendRequestService {
     });
 
     if (!existRequest?.status) {
-      throw new HttpException('Friend request already exists', 400);
+      throw new HttpException('Lời mời kết bạn đã tồn tại', 400);
     }
 
     if (existRequest?.status) {
-      throw new HttpException('You had add this user before', 400);
+      throw new HttpException('Hai bạn đã là bạn bè', 400);
     }
 
     const newRequest = this.friendRequestRepository.create({
@@ -58,10 +58,12 @@ export class FriendRequestService {
     if (type === 'sent') {
       query
         .where('friendRequest.fromId = :userId', { userId })
+        .andWhere('friendRequest.status = :status', { status: false })
         .leftJoinAndSelect('friendRequest.to', 'user'); // join đến người nhận
     } else {
       query
         .where('friendRequest.toId = :userId', { userId })
+        .andWhere('friendRequest.status = :status', { status: false })
         .leftJoinAndSelect('friendRequest.from', 'user'); // join đến người gửi
     }
 
@@ -79,9 +81,13 @@ export class FriendRequestService {
       toId: userId,
     });
     if (!request) {
-      throw new Error('Friend request not found');
+      throw new HttpException('Friend request not found', 404);
     }
-    request.status = status;
+    if (status === false) {
+      return await this.friendRequestRepository.remove(request);
+    } else {
+      request.status = status;
+    }
     return await this.friendRequestRepository.save(request);
   }
 }

@@ -4,12 +4,16 @@ import { FriendRequest } from 'src/friend-request/entities/friendRequest.entity'
 import { Repository } from 'typeorm';
 import { FriendDTO } from './DTO/FriendDTO';
 import { validate as isUuid } from 'uuid';
+import { User } from 'src/user/entities/user.entity';
+import { shuffleArray } from 'src/utils/shuffleArray';
 
 @Injectable()
 export class FriendService {
   constructor(
     @InjectRepository(FriendRequest)
     private readonly friendRepository: Repository<FriendRequest>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async getMyFriend(
@@ -38,7 +42,7 @@ export class FriendService {
       .select(`DISTINCT u."userId", u."fullName", u."avatarUrl"`)
       .where('friend.status = true')
       .andWhere(':userId IN (friend.fromId, friend.toId)', { userId })
-      .orderBy('u.userId', 'ASC') // Thêm orderBy để pagination ổn định
+      .orderBy('u.fullName', 'ASC') // Thêm orderBy để pagination ổn định
       .offset((page - 1) * limit) // Thay skip để rõ ràng hơn
       .limit(limit); // Thay take để rõ ràng hơn
 
@@ -73,5 +77,26 @@ export class FriendService {
       throw new HttpException('Friend not found', 404);
     }
     return await this.friendRepository.remove(friend);
+  }
+
+  async getRequestableUser(currentUserId: string) {
+    const listUser = await this.userRepository.query(
+      `
+      SELECT u."userId", u."fullName", u."avatarUrl", u."bio"
+      FROM "user" u
+      WHERE u."userId" != $1
+        AND u."role" = 'CLIENT'
+        AND u."userId" NOT IN (
+          SELECT "fromId" FROM "friend_request" WHERE "toId" = $1
+          UNION
+          SELECT "toId" FROM "friend_request" WHERE "fromId" = $1
+        )
+      `,
+      [currentUserId],
+    );
+
+    const result = shuffleArray(listUser);
+
+    return result;
   }
 }
