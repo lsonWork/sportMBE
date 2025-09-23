@@ -38,4 +38,9 @@ export class FriendController {
   deleteFriend(@GetUser() user: JwtUser, @Param('id') id: string) {
     return this.friendService.deleteFriend(user.userId, id);
   }
+
+  @Get('available')
+  getRequestableUser(@GetUser() user: JwtUser) {
+    return this.friendService.getRequestableUser(user.userId);
+  }
 }
