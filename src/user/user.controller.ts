@@ -68,18 +68,13 @@ export class UserController {
 
   @ApiBearerAuth('access-token')
   @Get(':id')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
   async findOne(
     @Param('id') id: string,
     @Request() req,
   ): Promise<UserResponseDTO> {
     const user = await this.userService.findOneById(id);
     const loggedInUser = req.user;
-    if (
-      loggedInUser.role !== Role.ADMIN &&
-      loggedInUser.userId !== user.userId
-    ) {
+    if (loggedInUser.userId !== user.userId) {
       throw new HttpException({ message: 'Forbidden' }, HttpStatus.FORBIDDEN);
     }
     return plainToClass(UserResponseDTO, user, {
