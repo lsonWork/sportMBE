@@ -43,4 +43,9 @@ export class FriendController {
   getRequestableUser(@GetUser() user: JwtUser) {
     return this.friendService.getRequestableUser(user.userId);
   }
+
+  @Get('get-one')
+  getOneUser(@GetUser() user: JwtUser) {
+    return this.friendService.getOneUser(user.userId);
+  }
 }
