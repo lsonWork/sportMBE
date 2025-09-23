@@ -6,6 +6,8 @@ import { FriendDTO } from './DTO/FriendDTO';
 import { validate as isUuid } from 'uuid';
 import { User } from 'src/user/entities/user.entity';
 import { shuffleArray } from 'src/utils/shuffleArray';
+import { RequestableUser } from './interface/RequestableUser';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class FriendService {
@@ -14,6 +16,7 @@ export class FriendService {
     private readonly friendRepository: Repository<FriendRequest>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly redisService: RedisService,
   ) {}
 
   async getMyFriend(
@@ -79,8 +82,8 @@ export class FriendService {
     return await this.friendRepository.remove(friend);
   }
 
-  async getRequestableUser(currentUserId: string) {
-    const listUser = await this.userRepository.query(
+  async getRequestableUser(currentUserId: string): Promise<RequestableUser[]> {
+    const listUser = await this.userRepository.query<RequestableUser[]>(
       `
       SELECT u."userId", u."fullName", u."avatarUrl", u."bio"
       FROM "user" u
@@ -95,8 +98,30 @@ export class FriendService {
       [currentUserId],
     );
 
-    const result = shuffleArray(listUser);
+    const result = shuffleArray<RequestableUser>(listUser);
+    const redisInstance = this.redisService.getClient();
+
+    const key = `requestable-user:${currentUserId}`;
+
+    await redisInstance.del(key);
+    for (const user of result) {
+      await redisInstance.rpush(key, JSON.stringify(user));
+    }
 
     return result;
+  }
+
+  async getOneUser(currentUserId: string) {
+    const redisInstance = this.redisService.getClient();
+    const key = `requestable-user:${currentUserId}`;
+
+    const rawUser = await redisInstance.lpop(key);
+
+    if (!rawUser) {
+      return null;
+    }
+
+    const user: RequestableUser = JSON.parse(rawUser) as RequestableUser;
+    return user;
   }
 }

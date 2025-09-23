@@ -15,7 +15,7 @@ import { MailModule } from 'src/mail/mail.module';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET as string, // bí mật
-      signOptions: { expiresIn: '1h' }, // token hết hạn sau 1h
+      signOptions: { expiresIn: '1y' }, // token hết hạn sau 1h
     }),
     RedisModule,
     MailModule,
