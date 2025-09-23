@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Advertisement } from './entities/advertisement.entity';
-import { Repository } from 'typeorm';
+import {
+  LessThan,
+  LessThanOrEqual,
+  MoreThan,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { validate as isUuid } from 'uuid';
@@ -18,6 +24,34 @@ export class AdvertisementService {
     userId: string,
     createAdvertisementDto: CreateAdvertisementDto,
   ) {
+    const { startDate, endDate } = createAdvertisementDto;
+    if (startDate > endDate) {
+      throw new HttpException(
+        { message: 'Start date must be before end date' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (startDate < new Date()) {
+      throw new HttpException(
+        { message: 'Start date must be after today' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (endDate < new Date()) {
+      throw new HttpException(
+        { message: 'End date must be after today' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const diffInMs = endDate.getTime() - startDate.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    if (diffInDays > 5) {
+      throw new HttpException(
+        { message: 'The maximum duration is 5 days' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const newAds = this.advertisementRepository.create({
       ...createAdvertisementDto,
       owner: { userId },
@@ -27,7 +61,12 @@ export class AdvertisementService {
     return await this.advertisementRepository.save(newAds);
   }
 
-  async findAll(page: number, limit: number, search?: string) {
+  async findAll(
+    page: number,
+    limit: number,
+    search?: string,
+    status?: boolean,
+  ) {
     const queryBuilder = this.advertisementRepository
       .createQueryBuilder('advertisement')
       .orderBy('advertisement.createdAt', 'DESC');
@@ -36,20 +75,34 @@ export class AdvertisementService {
         search: `%${search}%`,
       });
     }
+    if (status) {
+      queryBuilder.andWhere('advertisement.status = :status', { status });
+    }
     return paginate<Advertisement>(queryBuilder, { page, limit });
   }
 
-  async getAdsByOwnerId(userId: string) {
+  async getAdsByOwnerId(
+    userId: string,
+    page: number,
+    limit: number,
+    search?: string,
+  ) {
     if (!isUuid(userId)) {
       throw new HttpException(
         { message: 'Invalid user ID' },
         HttpStatus.BAD_REQUEST,
       );
     }
-    const result = await this.advertisementRepository.find({
-      where: { owner: { userId } },
-    });
-    return result;
+    const queryBuilder = this.advertisementRepository
+      .createQueryBuilder('advertisement')
+      .orderBy('advertisement.status', 'DESC')
+      .where('advertisement.owner.userId = :userId', { userId });
+    if (search) {
+      queryBuilder.andWhere('advertisement.title ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+    return paginate<Advertisement>(queryBuilder, { page, limit });
   }
 
   async updateAdvertisement(
@@ -75,5 +128,131 @@ export class AdvertisementService {
       ...advertisement,
       ...updateAdvertisementDto,
     });
+  }
+
+  async getAdsByAdsId(advertisementId: string) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const result = await this.advertisementRepository.findOne({
+      where: { advertisementId },
+    });
+    if (!result) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return result;
+  }
+
+  async setOrderAdvertisement(advertisementId: string, order: string) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const advertisement = await this.advertisementRepository.findOne({
+      where: { advertisementId, status: true },
+    });
+    if (!advertisement) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    advertisement.displayOrder = order;
+    return await this.advertisementRepository.save(advertisement);
+  }
+
+  async setHomeAdvertisement(advertisementId: string) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const advertisement = await this.advertisementRepository.findOne({
+      where: { advertisementId, status: true },
+    });
+    if (!advertisement) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    advertisement.displayHome = true;
+    return await this.advertisementRepository.save(advertisement);
+  }
+
+  async recoveryAdvertisement(advertisementId: string) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const advertisement = await this.advertisementRepository.findOne({
+      where: { advertisementId },
+    });
+    if (!advertisement) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    advertisement.displayHome = false;
+    advertisement.displayOrder = null;
+    return await this.advertisementRepository.save(advertisement);
+  }
+
+  async deleteAdvertisement(advertisementId: string) {
+    if (!isUuid(advertisementId)) {
+      throw new HttpException(
+        { message: 'Invalid advertisement ID' },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const advertisement = await this.advertisementRepository.findOne({
+      where: { advertisementId },
+    });
+    if (!advertisement) {
+      throw new HttpException(
+        { message: 'Advertisement not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    advertisement.status = false;
+    return await this.advertisementRepository.save(advertisement);
+  }
+
+  async adsHome() {
+    return this.advertisementRepository.find({
+      where: {
+        displayHome: true,
+        status: true,
+        startDate: LessThanOrEqual(new Date()),
+        endDate: MoreThanOrEqual(new Date()),
+      },
+    });
+  }
+
+  async adsAdsPage(page: number, limit: number) {
+    const queryBuilder = this.advertisementRepository
+      .createQueryBuilder('advertisement')
+      .where('advertisement.status = :status', { status: true })
+      .andWhere('advertisement.startDate <= :now', { now: new Date() })
+      .andWhere('advertisement.endDate >= :now', { now: new Date() })
+      .orderBy(
+        'CASE WHEN advertisement.displayOrder IS NULL THEN 1 ELSE 0 END',
+        'ASC',
+      )
+      .addOrderBy('advertisement.displayOrder', 'ASC')
+      .addOrderBy('advertisement.createdAt', 'DESC');
+    return paginate<Advertisement>(queryBuilder, { page, limit });
   }
 }

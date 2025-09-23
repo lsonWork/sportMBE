@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -73,26 +74,114 @@ export class AdvertisementController {
     type: String,
     description: 'Từ khóa tìm kiếm',
   })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: Boolean,
+    description: 'Trạng thái',
+  })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('search') search?: string,
+    @Query('status') status?: boolean,
   ) {
-    return this.advertisementService.findAll(page, limit, search);
+    return this.advertisementService.findAll(page, limit, search, status);
   }
 
   @ApiBearerAuth('access-token')
   @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
+  @Roles(RoleEnum.OWNER, RoleEnum.ADMIN)
   @Get('me')
-  findOne(@GetUser() user: JwtUser) {
-    return this.advertisementService.getAdsByOwnerId(user.userId);
+  @ApiQuery({
+    name: 'page',
+    required: true,
+    type: Number,
+    example: 1,
+    description: 'Trang hiện tại',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: true,
+    type: Number,
+    example: 10,
+    description: 'Số item mỗi trang',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  findOne(
+    @GetUser() user: JwtUser,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.advertisementService.getAdsByOwnerId(
+      user.userId,
+      page,
+      limit,
+      search,
+    );
   }
 
   @Public()
-  @Get(':userId')
-  getOwnerAds(@Param('userId') userId: string) {
-    return this.advertisementService.getAdsByOwnerId(userId);
+  @Get(':userId/author')
+  @ApiQuery({
+    name: 'page',
+    required: true,
+    type: Number,
+    example: 1,
+    description: 'Trang hiện tại',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: true,
+    type: Number,
+    example: 10,
+    description: 'Số item mỗi trang',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  getOwnerAds(
+    @Param('userId') userId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.advertisementService.getAdsByOwnerId(
+      userId,
+      page,
+      limit,
+      search,
+    );
+  }
+
+  @Public()
+  @Get('home')
+  adsHome() {
+    return this.advertisementService.adsHome();
+  }
+
+  @Public()
+  @Get('ads-page')
+  adsAdsPage(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ) {
+    return this.advertisementService.adsAdsPage(page, limit);
+  }
+
+  @Public()
+  @Get(':id')
+  findOneAd(@Param('id') advertisementId: string) {
+    return this.advertisementService.getAdsByAdsId(advertisementId);
   }
 
   @ApiBearerAuth('access-token')
@@ -109,8 +198,7 @@ export class AdvertisementController {
     },
   })
   @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
-  @Roles(RoleEnum.ADMIN)
+  @Roles(RoleEnum.OWNER, RoleEnum.ADMIN)
   @Patch(':advertisementId')
   updateAdvertisement(
     @Param('advertisementId') advertisementId: string,
@@ -120,5 +208,49 @@ export class AdvertisementController {
       advertisementId,
       updateAdvertisementDto,
     );
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  @Patch(':advertisementId/priority')
+  @ApiQuery({
+    name: 'order',
+    required: true,
+    type: String,
+    example: '1',
+  })
+  setOrderAdvertisement(
+    @Param('advertisementId') advertisementId: string,
+    @Query('order') order: string,
+  ) {
+    return this.advertisementService.setOrderAdvertisement(
+      advertisementId,
+      order,
+    );
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  @Patch(':advertisementId/home')
+  setHomeAdvertisement(@Param('advertisementId') advertisementId: string) {
+    return this.advertisementService.setHomeAdvertisement(advertisementId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  @Patch(':advertisementId/recover')
+  recoveryAdvertisement(@Param('advertisementId') advertisementId: string) {
+    return this.advertisementService.recoveryAdvertisement(advertisementId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
+  @Delete(':advertisementId')
+  deleteAdvertisement(@Param('advertisementId') advertisementId: string) {
+    return this.advertisementService.deleteAdvertisement(advertisementId);
   }
 }
