@@ -22,6 +22,12 @@ export class User {
   email: string;
 
   @Column({ nullable: true })
+  birthDate: Date;
+
+  @Column({ nullable: true })
+  gender: boolean;
+
+  @Column({ nullable: true })
   phoneNumber: string;
 
   @Column({ nullable: true })
