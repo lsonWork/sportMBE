@@ -85,7 +85,7 @@ export class FriendService {
   async getRequestableUser(currentUserId: string): Promise<RequestableUser[]> {
     const listUser = await this.userRepository.query<RequestableUser[]>(
       `
-      SELECT u."userId", u."fullName", u."avatarUrl", u."bio"
+      SELECT u."userId", u."fullName", u."avatarUrl", u."bio", u."birthDate", u."gender"
       FROM "user" u
       WHERE u."userId" != $1
         AND u."role" = 'CLIENT'
