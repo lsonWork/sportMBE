@@ -5,7 +5,6 @@ import { RedisModule } from './redis/redis.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SportTypeModule } from './sport-type/sport-type.module';
 import { CourtModule } from './court/court.module';
-import { FeedbackModule } from './feedback/feedback.module';
 import { UserModule } from './user/user.module';
 import { SubcriptionModule } from './subcription/subcription.module';
 import { AdvertisementModule } from './advertisement/advertisement.module';
@@ -40,7 +39,6 @@ import { RatingModule } from './rating/rating.module';
     }),
     SportTypeModule,
     CourtModule,
-    FeedbackModule,
     UserModule,
     SubcriptionModule,
     AdvertisementModule,

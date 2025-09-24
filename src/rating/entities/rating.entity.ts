@@ -14,6 +14,9 @@ export class Rating {
   ratingId: string;
 
   @Column()
+  content: string;
+
+  @Column()
   star: number;
 
   @Column()
