@@ -129,6 +129,7 @@ export class BookingService {
         paymentStatus: PaymentStatus.PENDING,
         booking: savedBooking,
         user: user,
+        transactionCode: `DEP-${Date.now()}`,
       });
       await queryRunner.manager.save(depositPayment);
       await queryRunner.commitTransaction();
