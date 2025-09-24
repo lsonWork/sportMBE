@@ -9,6 +9,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
 import { RequestUpdate } from 'src/request-update/entities/request-update.entity';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 import { FriendRequest } from 'src/friend-request/entities/friendRequest.entity';
+import { Rating } from 'src/rating/entities/rating.entity';
 
 @Entity()
 export class User {
@@ -82,8 +83,11 @@ export class User {
   bookingInvitations: BookingInvitee[];
 
   @OneToMany(() => FriendRequest, (fr) => fr.from)
-  sentFriendRequests: FriendRequest[]; // các request mà user gửi
+  sentFriendRequests: FriendRequest[];
 
   @OneToMany(() => FriendRequest, (fr) => fr.to)
-  receivedFriendRequests: FriendRequest[]; // các request mà user nhận
+  receivedFriendRequests: FriendRequest[];
+
+  @OneToMany(() => Rating, (rating) => rating.owner)
+  ratings: Rating[];
 }
