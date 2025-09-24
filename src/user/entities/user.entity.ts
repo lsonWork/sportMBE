@@ -1,6 +1,5 @@
 import { Advertisement } from 'src/advertisement/entities/advertisement.entity';
 import { Court } from 'src/court/entities/court.entity';
-import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { UserSubscription } from './userSubcription.entity';
@@ -60,9 +59,6 @@ export class User {
 
   @OneToMany(() => Court, (court) => court.owner)
   courts: Court[];
-
-  @OneToMany(() => Feedback, (feedback) => feedback.owner)
-  feedbacks: Feedback[];
 
   @OneToMany(
     () => UserSubscription,
