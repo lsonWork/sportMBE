@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +17,7 @@ import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
+import { UpdateRatingDto } from './DTO/UpdateRatingDto';
 
 @Controller('rating')
 @ApiBearerAuth('access-token')
@@ -31,6 +33,7 @@ export class RatingController {
       properties: {
         courtId: { type: 'string' },
         star: { type: 'number' },
+        content: { type: 'string', nullable: true },
       },
     },
   })
@@ -55,5 +58,22 @@ export class RatingController {
   @Delete(':ratingId')
   async deleteRating(@Param('ratingId') ratingId: string) {
     return this.ratingService.deleteRating(ratingId);
+  }
+
+  @Patch(':ratingId')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        star: { type: 'number', nullable: true },
+        content: { type: 'string', nullable: true },
+      },
+    },
+  })
+  async updateRating(
+    @Param('ratingId') ratingId: string,
+    @Body() updateRatingDto: UpdateRatingDto,
+  ) {
+    return this.ratingService.updateRating(ratingId, updateRatingDto);
   }
 }
