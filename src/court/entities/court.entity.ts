@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 import { CourtImage } from './courtImage.entity';
 import { SportType } from 'src/sport-type/entities/sportType.entity';
-import { Feedback } from 'src/feedback/entities/feedback.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
+import { Rating } from 'src/rating/entities/rating.entity';
 
 @Entity()
 export class Court {
@@ -52,9 +52,9 @@ export class Court {
   @JoinColumn({ name: 'sportTypeId' })
   sportType: SportType;
 
-  @OneToMany(() => Feedback, (feedback) => feedback.court)
-  feedbacks: Feedback[];
-
   @OneToMany(() => Booking, (booking) => booking.court)
   bookings: Booking[];
+
+  @OneToMany(() => Rating, (rating) => rating.court)
+  ratings: Rating[];
 }

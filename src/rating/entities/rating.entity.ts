@@ -9,21 +9,30 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Feedback {
+export class Rating {
   @PrimaryGeneratedColumn('uuid')
-  feedbackId: string;
+  ratingId: string;
 
   @Column()
   content: string;
 
   @Column()
+  star: number;
+
+  @Column()
   createdAt: Date;
 
-  @ManyToOne(() => Court, (court) => court.feedbacks)
+  @Column()
+  ownerId: string;
+
+  @Column()
+  courtId: string;
+
+  @ManyToOne(() => Court, (court) => court.ratings)
   @JoinColumn({ name: 'courtId' })
   court: Court;
 
-  @ManyToOne(() => User, (user) => user.feedbacks)
+  @ManyToOne(() => User, (user) => user.ratings)
   @JoinColumn({ name: 'ownerId' })
   owner: User;
 }

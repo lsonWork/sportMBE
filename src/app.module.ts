@@ -5,7 +5,6 @@ import { RedisModule } from './redis/redis.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SportTypeModule } from './sport-type/sport-type.module';
 import { CourtModule } from './court/court.module';
-import { FeedbackModule } from './feedback/feedback.module';
 import { UserModule } from './user/user.module';
 import { SubcriptionModule } from './subcription/subcription.module';
 import { AdvertisementModule } from './advertisement/advertisement.module';
@@ -22,6 +21,7 @@ import { RolesGuard } from './common/guards/role.guard';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RequestUpdateModule } from './request-update/request-update.module';
 import { FriendModule } from './friend/friend.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
   imports: [
@@ -39,7 +39,6 @@ import { FriendModule } from './friend/friend.module';
     }),
     SportTypeModule,
     CourtModule,
-    FeedbackModule,
     UserModule,
     SubcriptionModule,
     AdvertisementModule,
@@ -51,6 +50,7 @@ import { FriendModule } from './friend/friend.module';
     MailModule,
     RequestUpdateModule,
     FriendModule,
+    RatingModule,
   ],
   controllers: [AppController],
   providers: [
