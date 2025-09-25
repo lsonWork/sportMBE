@@ -38,4 +38,7 @@ export class CourtDto {
   @Expose()
   @Type(() => SportTypeResponseDto) // Dùng @Type để chỉ định DTO cho object lồng nhau
   sportType: string;
+
+  @Expose()
+  avgRating: number;
 }
