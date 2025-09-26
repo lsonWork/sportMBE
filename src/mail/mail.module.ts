@@ -9,16 +9,13 @@ import { join } from 'path';
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
+          service: 'SendGrid',
           auth: {
-            user: process.env.MAIL_ADDRESS,
-            pass: process.env.MAIL_PASSWORD,
+            api_key: process.env.SENDGRID_API_KEY,
           },
         },
         defaults: {
-          from: 'SportM',
+          from: process.env.MAIL_ADDRESS || 'no-reply@sportm.com',
         },
         template: {
           dir: join(process.cwd(), 'src', 'mail', 'templates'),
