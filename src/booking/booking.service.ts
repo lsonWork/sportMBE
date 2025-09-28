@@ -11,6 +11,11 @@ import { BookingStatus } from 'src/common/enum/BookingStatus';
 import { CompleteBookingDto } from './DTO/complete-booking.dto';
 import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
+import {
+  IPaginationOptions,
+  paginate,
+  Pagination,
+} from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class BookingService {
@@ -291,5 +296,69 @@ export class BookingService {
     booking.status = BookingStatus.CANCELLED;
 
     return this.bookingRepository.save(booking);
+  }
+
+  async getMyBookings(
+    userId: string,
+    options: IPaginationOptions,
+    status?: BookingStatus,
+  ): Promise<Pagination<Booking>> {
+    const queryBuilder = this.bookingRepository.createQueryBuilder('booking');
+
+    queryBuilder
+      .where('booking.userId = :userId', { userId: userId })
+      .leftJoinAndSelect('booking.court', 'court')
+      .orderBy('booking.bookingDate', 'DESC');
+
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+
+    return paginate<Booking>(queryBuilder, options);
+  }
+  async getBookingsForCourtByOwner(
+    courtId: string,
+    currentUserId: string,
+    options: IPaginationOptions,
+    status?: BookingStatus,
+    search?: string,
+  ): Promise<Pagination<Booking>> {
+    const court = await this.courtRepository.findOne({
+      where: { courtId: courtId },
+      relations: ['owner'],
+    });
+
+    if (!court) {
+      throw new HttpException(
+        { message: `Court with ID "${courtId}" not found` },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (court.owner.userId !== currentUserId) {
+      throw new HttpException(
+        {
+          message:
+            'You do not have permission to view bookings for this court.',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const queryBuilder = this.bookingRepository.createQueryBuilder('booking');
+    queryBuilder
+      .where('booking.courtId = :courtId', { courtId })
+      .leftJoinAndSelect('booking.user', 'user')
+      .orderBy('booking.startTime', 'DESC');
+
+    if (status) {
+      queryBuilder.andWhere('booking.status = :status', { status });
+    }
+    if (search) {
+      queryBuilder.andWhere('user.fullName ILIKE :search', {
+        search: `%${search}%`,
+      });
+    }
+
+    return paginate<Booking>(queryBuilder, options);
   }
 }

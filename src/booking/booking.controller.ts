@@ -1,16 +1,21 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
+  Get,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './DTO/create-booking.dto';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
+import { BookingStatus } from 'src/common/enum/BookingStatus';
 
 @Controller('/bookings')
 export class BookingController {
@@ -76,5 +81,33 @@ export class BookingController {
     @GetUser() user: JwtUser,
   ) {
     return this.bookingService.cancelBookingByUser(id, user.userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get('/my-bookings')
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description:
+      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  async getMyBookings(
+    @GetUser() user: JwtUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('status') status?: BookingStatus,
+  ) {
+    return this.bookingService.getMyBookings(
+      user.userId,
+      { page, limit },
+      status,
+    );
   }
 }
