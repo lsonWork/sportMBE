@@ -13,7 +13,7 @@ export class Rating {
   @PrimaryGeneratedColumn('uuid')
   ratingId: string;
 
-  @Column({ nullable: true })
+  @Column()
   content: string;
 
   @Column()

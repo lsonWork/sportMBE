@@ -41,9 +41,6 @@ export class Court {
   @Column({ type: 'double precision' })
   lng: number;
 
-  @Column({ type: 'decimal', precision: 2, scale: 1, nullable: true })
-  avgRating: number;
-
   @ManyToOne(() => User, (user) => user.courts)
   @JoinColumn({ name: 'ownerId' })
   owner: User;

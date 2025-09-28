@@ -17,5 +17,6 @@ import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.ent
     BookingInviteeModule,
   ],
   controllers: [BookingController, BookingOwnerController],
+  exports: [BookingService, TypeOrmModule],
 })
 export class BookingModule {}

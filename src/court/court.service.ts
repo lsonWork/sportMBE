@@ -264,7 +264,6 @@ export class CourtService {
       distance: number;
     }> = await this.courtRepository.query(sql, params);
 
-    // map và parse về number cho chắc
     return rows.map((r) => ({
       id: String(r.id),
       name: String(r.name),
@@ -273,4 +272,5 @@ export class CourtService {
       distance: Math.round(Number(r.distance)),
     }));
   }
+
 }

@@ -24,10 +24,18 @@ import { CourtDto } from './DTO/courtDto';
 import { plainToClass } from 'class-transformer';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import type { JwtUser } from 'src/common/decorators/get-user.decorator';
+import { BookingService } from 'src/booking/booking.service';
+import { BookingStatus } from 'src/common/enum/BookingStatus';
+import { PaymentStatus } from 'src/common/enum/PaymentStatus';
+import { PaymentService } from 'src/payment/payment.service';
 
 @Controller('owner/courts')
 export class CourtController {
-  constructor(private readonly courtService: CourtService) {}
+  constructor(
+    private readonly courtService: CourtService,
+    private readonly bookingService: BookingService,
+    private readonly paymentService: PaymentService,
+  ) {}
   @ApiBearerAuth('access-token')
   @Post('/')
   @UseGuards(RolesGuard)
@@ -167,5 +175,72 @@ export class CourtController {
   })
   async deleteCourt(@Param('id') id: string, @GetUser() user: JwtUser) {
     return this.courtService.deleteCourtDto(user.userId, id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Get(':id/bookings')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description:
+      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  async getBookingsForCourt(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: JwtUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('status', new DefaultValuePipe(BookingStatus.CONFIRMED))
+    status?: BookingStatus,
+    @Query('search') search?: string,
+  ) {
+    return this.bookingService.getBookingsForCourtByOwner(
+      id,
+      user.userId,
+      { page, limit },
+      status,
+      search,
+    );
+  }
+
+  @Get(':id/payments')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description:
+      'Trạng thái của giao dịch (PENDING, COMPLETED, FAILED) Default là PENDING',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  async getPaymentsForCourt(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: JwtUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('status', new DefaultValuePipe(PaymentStatus.SUCCESS))
+    status?: PaymentStatus,
+  ) {
+    return this.paymentService.getPaymentsForCourt(
+      id,
+      user.userId,
+      { page, limit },
+      status,
+    );
   }
 }
