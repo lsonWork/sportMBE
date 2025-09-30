@@ -4,10 +4,10 @@ import { CourtImagesResponseDto } from './courtImagesResponseDto';
 
 export class CourtDto {
   @Expose()
-  id: string;
+  courtId: string;
 
   @Expose()
-  name: string;
+  courtName: string;
 
   @Expose()
   @Type(() => CourtImagesResponseDto) // Dùng @Type cho mảng các object lồng nhau

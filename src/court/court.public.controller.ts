@@ -42,12 +42,13 @@ export class CourtPublicController {
       sportTypeId,
       search,
     );
+    console.log(courtPage);
     const transformedItems = courtPage.items.map((court) =>
       plainToClass(CourtDto, court, {
         excludeExtraneousValues: true, // Rất quan trọng!
       }),
     );
-
+    console.log(transformedItems);
     return new Pagination<CourtDto>(transformedItems, courtPage.meta);
   }
 
