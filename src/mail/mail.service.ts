@@ -11,7 +11,7 @@ export class MailService {
     try {
       await sgMail.send({
         to,
-        from: process.env.MAIL_ADDRESS || 'no-reply@sportm.com',
+        from: 'no-reply@sportm.site',
         subject,
         templateId: 'd-2cf90b9a62bd4bf3af3b81055a5cc881',
         dynamicTemplateData: templateData,
