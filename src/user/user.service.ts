@@ -8,11 +8,14 @@ import {
   Pagination,
   IPaginationOptions,
 } from 'nestjs-typeorm-paginate';
+import { UpdateProfileDto } from './DTO/UpdateProfileDto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async paginate(
@@ -60,15 +63,29 @@ export class UserService {
     await this.userRepository.save(user);
   }
 
-  async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
-    const user = await this.findOneById(userId);
-    if (!user) {
+  async updateUser(
+    userId: string,
+    updateData: Partial<User>,
+  ): Promise<UpdateProfileDto> {
+    await this.userRepository.update(userId, updateData);
+    const updatedUser = await this.findOneById(userId);
+    if (!updatedUser) {
       throw new HttpException(
         { message: 'User not found' },
         HttpStatus.NOT_FOUND,
       );
     }
-    Object.assign(user, updateData);
-    return this.userRepository.save(user);
+    const payload = {
+      email: updatedUser.email,
+      userId: updatedUser.userId,
+      role: updatedUser.role,
+      fullName: updatedUser.fullName,
+    };
+    const token = this.jwtService.sign(payload);
+    const responseDto: UpdateProfileDto = {
+      ...updatedUser,
+      token: token,
+    };
+    return responseDto;
   }
 }

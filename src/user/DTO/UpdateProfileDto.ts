@@ -27,4 +27,7 @@ export class UpdateProfileDto {
 
   @IsString()
   gender: boolean;
+
+  @IsString()
+  token: string;
 }

@@ -58,7 +58,7 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateRequest: UserResponseDTO,
     @GetUser() loggedInUser: JwtUser,
-  ): Promise<UserResponseDTO> {
+  ) {
     if (loggedInUser.userId !== id) {
       throw new HttpException(
         { message: 'Bạn không thể cập nhật thông tin cá nhân của người khác' },
@@ -66,8 +66,6 @@ export class UserController {
       );
     }
     const updatedUser = await this.userService.updateUser(id, updateRequest);
-    return plainToClass(UserResponseDTO, updatedUser, {
-      excludeExtraneousValues: true,
-    });
+    return updatedUser;
   }
 }
