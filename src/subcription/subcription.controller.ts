@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   Patch,
   Post,
@@ -14,6 +15,9 @@ import { Role as RoleEnum } from 'src/common/enum/Role';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Request } from '@nestjs/common';
 import { UpdateSubscriptionDto } from './DTO/updateSubcriptionDto';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('subcription')
 export class SubcriptionController {
@@ -26,22 +30,21 @@ export class SubcriptionController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', example: 'Basketball' },
-        price: { type: 'number', example: 9.99 },
-        duration: { type: 'number', example: 30 },
-        description: { type: 'string', example: 'A popular sport' },
+        name: { type: 'string', example: 'Gói Thanh Hóa' },
+        price: { type: 'number', example: 36.36 },
+        duration: { type: 'number', example: 36 },
+        description: { type: 'string', example: 'Gói rau má' },
       },
     },
   })
   @Post()
   async create(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
-    @Request() req,
+    @GetUser() loggedInUser: JwtUser,
   ) {
-    const loggedInUser = req.user;
     return this.subcriptionService.createSubscription(
       createSubscriptionDto,
-      loggedInUser,
+      loggedInUser.userId,
     );
   }
 
@@ -52,10 +55,10 @@ export class SubcriptionController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', example: 'Basketball' },
-        price: { type: 'number', example: 9.99 },
-        duration: { type: 'number', example: 30 },
-        description: { type: 'string', example: 'A popular sport' },
+        name: { type: 'string', example: 'Gói Thanh Hóa' },
+        price: { type: 'number', example: 36.36 },
+        duration: { type: 'number', example: 36 },
+        description: { type: 'string', example: 'Gói rau má' },
       },
     },
   })
@@ -63,13 +66,17 @@ export class SubcriptionController {
   async update(
     @Param('id') id: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
-    @Request() req,
+    @GetUser() loggedInUser: JwtUser,
   ) {
-    const loggedInUser = req.user;
     return this.subcriptionService.updateSubscription(
       id,
       updateSubscriptionDto,
-      loggedInUser,
+      loggedInUser.userId,
     );
+  }
+  @Public()
+  @Get()
+  async findAll() {
+    return this.subcriptionService.findAll();
   }
 }

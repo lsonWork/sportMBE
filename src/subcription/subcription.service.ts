@@ -3,18 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Subscription } from './entities/subscription.entity';
 import { Repository } from 'typeorm';
 import { CreateSubscriptionDto } from './DTO/subcriptionDto';
-import { User } from 'src/user/entities/user.entity';
 import { UpdateSubscriptionDto } from './DTO/updateSubcriptionDto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class SubcriptionService {
   constructor(
     @InjectRepository(Subscription)
     private readonly subscriptionRepository: Repository<Subscription>,
+    private readonly userService: UserService,
   ) {}
   async createSubscription(
     createSubscriptionDto: CreateSubscriptionDto,
-    owner: User,
+    userId: string,
   ) {
     const { name, price, duration, description } = createSubscriptionDto;
     const newSubscription = this.subscriptionRepository.create({
@@ -23,9 +24,10 @@ export class SubcriptionService {
       duration,
       description,
     });
-    if (owner.role !== 'ADMIN') {
+    const user = await this.userService.findOneById(userId);
+    if (user.role !== 'ADMIN') {
       throw new HttpException(
-        { message: "You don't have permission to create a subscription" },
+        { message: 'Bạn k có quyền tạo gói dịch vụ' },
         HttpStatus.FORBIDDEN,
       );
     }
@@ -43,21 +45,22 @@ export class SubcriptionService {
   async updateSubscription(
     id: string,
     updateSubscriptionDto: UpdateSubscriptionDto,
-    owner: User,
+    userId: string,
   ) {
     const { name, price, duration, description } = updateSubscriptionDto;
     const subscription = await this.subscriptionRepository.findOne({
       where: { subscriptionId: id },
     });
+    const owner = await this.userService.findOneById(userId);
     if (!subscription) {
       throw new HttpException(
-        { message: 'Subscription not found' },
+        { message: 'Không tìm thấy gói dịch vụ' },
         HttpStatus.NOT_FOUND,
       );
     }
     if (owner.role !== 'ADMIN') {
       throw new HttpException(
-        { message: "You don't have permission to update this subscription" },
+        { message: 'Bạn k có quyền cập nhật gói dịch vụ này' },
         HttpStatus.FORBIDDEN,
       );
     }
@@ -72,6 +75,18 @@ export class SubcriptionService {
       const err = error as Error;
       throw new HttpException(
         { message: err.message || 'Error updating subscription' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async findAll() {
+    try {
+      const subscriptions = await this.subscriptionRepository.find();
+      return subscriptions;
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(
+        { message: err.message || 'Error fetching subscriptions' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

@@ -2,80 +2,34 @@
 import {
   Controller,
   Get,
-  Query,
-  DefaultValuePipe,
-  ParseIntPipe,
   Param,
-  Request,
   HttpStatus,
   HttpException,
-  UseGuards,
-  Post,
   Body,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Role } from 'src/common/enum/Role';
-import { Pagination } from 'nestjs-typeorm-paginate';
 import { plainToClass } from 'class-transformer';
 import { UserResponseDTO } from './DTO/UserDTO';
-import { UpdateStatusDto } from './DTO/UpdateStatusDto';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { Roles } from 'src/common/decorators/role.decorator';
-import { Role as RoleEnum } from 'src/common/enum/Role';
-import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @ApiBearerAuth('access-token')
-  @Get()
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
-  @ApiQuery({
-    name: 'role',
-    required: false,
-    type: String,
-    example: 'ADMIN/OWNER/CLIENT',
-    description: 'Vai trò của người dùng',
-  })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Từ khóa tìm kiếm',
-  })
-  async findAll(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Query('role') role?: Role,
-    @Query('search') search?: string,
-  ): Promise<Pagination<UserResponseDTO>> {
-    limit = limit > 100 ? 100 : limit;
-    const userPage = await this.userService.paginate(
-      { page, limit },
-      role,
-      search,
-    );
-    const transformedItems = userPage.items.map((user) =>
-      plainToClass(UserResponseDTO, user, {
-        excludeExtraneousValues: true, // Rất quan trọng!
-      }),
-    );
-
-    return new Pagination<UserResponseDTO>(transformedItems, userPage.meta);
-  }
-
   @ApiBearerAuth('access-token')
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Request() req,
+    @GetUser() loggedInUser: JwtUser,
   ): Promise<UserResponseDTO> {
     const user = await this.userService.findOneById(id);
-    const loggedInUser = req.user;
     if (loggedInUser.userId !== user.userId) {
-      throw new HttpException({ message: 'Forbidden' }, HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        { message: 'Bạn không thể xem thông tin cá nhân của người khác' },
+        HttpStatus.FORBIDDEN,
+      );
     }
     return plainToClass(UserResponseDTO, user, {
       excludeExtraneousValues: true,
@@ -83,35 +37,36 @@ export class UserController {
   }
 
   @ApiBearerAuth('access-token')
-  @Get(':id/status')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
-  async getStatus(@Param('id') id: string): Promise<{ status: boolean }> {
-    const user = await this.userService.findOneById(id);
-    return { status: user.status };
-  }
-
-  @ApiBearerAuth('access-token')
-  @Post(':id/status')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
+  @Patch(':id')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        status: { type: 'boolean', example: true },
+        fullName: { type: 'string', example: 'Luong Thanh Hoa' },
+        email: { type: 'string', example: 'hoa.thanh.que@example.com' },
+        avatarUrl: { type: 'string', example: 'http://example.com/avatar.jpg' },
+        phoneNumber: { type: 'string', example: '0987654321' },
+        bankAccount: { type: 'string', example: '123456789' },
+        bio: { type: 'string', example: 'NguoiThanhHoaAnRauMa' },
+        birthDate: { type: 'string', format: 'date', example: '1990-12-31' },
+        documentUrl: { type: 'string', example: 'http://363636.com/doc.pdf' },
+        gender: { type: 'boolean', example: true },
       },
     },
   })
-  async updateStatus(
+  async updateProfile(
     @Param('id') id: string,
-    @Body() updateStatusDto: UpdateStatusDto,
+    @Body() updateRequest: UserResponseDTO,
+    @GetUser() loggedInUser: JwtUser,
   ): Promise<UserResponseDTO> {
-    const user = await this.userService.updateStatus(
-      id,
-      updateStatusDto.status,
-    );
-    return plainToClass(UserResponseDTO, user, {
+    if (loggedInUser.userId !== id) {
+      throw new HttpException(
+        { message: 'Bạn không thể cập nhật thông tin cá nhân của người khác' },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const updatedUser = await this.userService.updateUser(id, updateRequest);
+    return plainToClass(UserResponseDTO, updatedUser, {
       excludeExtraneousValues: true,
     });
   }
