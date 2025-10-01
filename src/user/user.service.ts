@@ -59,4 +59,16 @@ export class UserService {
     user.status = status;
     await this.userRepository.save(user);
   }
+
+  async updateUser(userId: string, updateData: Partial<User>): Promise<User> {
+    const user = await this.findOneById(userId);
+    if (!user) {
+      throw new HttpException(
+        { message: 'User not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    Object.assign(user, updateData);
+    return this.userRepository.save(user);
+  }
 }
