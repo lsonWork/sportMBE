@@ -11,6 +11,12 @@ export class UserResponseDTO {
   email: string;
 
   @Expose()
+  birthDate: Date;
+
+  @Expose()
+  gender: boolean;
+
+  @Expose()
   phoneNumber: string;
 
   @Expose()
@@ -21,4 +27,13 @@ export class UserResponseDTO {
 
   @Expose()
   status: boolean;
+
+  @Expose()
+  bankAccount: string;
+
+  @Expose()
+  documentUrl: string;
+
+  @Expose()
+  bio: string;
 }

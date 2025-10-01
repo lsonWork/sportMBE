@@ -5,9 +5,16 @@ import { User } from './entities/user.entity';
 import { UserSubscription } from './entities/userSubcription.entity';
 import { UserController } from './user.controller';
 import { UserAdminController } from './user.admin.controller';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserSubscription])],
+  imports: [
+    TypeOrmModule.forFeature([User, UserSubscription]),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET as string,
+      signOptions: { expiresIn: '1y' },
+    }),
+  ],
   controllers: [UserController, UserAdminController],
   providers: [UserService],
   exports: [TypeOrmModule, UserService],
