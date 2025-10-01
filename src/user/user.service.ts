@@ -83,9 +83,18 @@ export class UserService {
     };
     const token = this.jwtService.sign(payload);
     const responseDto: UpdateProfileDto = {
-      ...updatedUser,
+      fullName: updatedUser.fullName,
+      email: updatedUser.email,
+      avatarUrl: updatedUser.avatarUrl,
+      phoneNumber: updatedUser.phoneNumber,
+      bankAccount: updatedUser.bankAccount,
+      bio: updatedUser.bio,
+      birthDate: updatedUser.birthDate,
+      documentUrl: updatedUser.documentUrl,
+      gender: updatedUser.gender,
       token: token,
     };
+    console.log('Updated User:', responseDto);
     return responseDto;
   }
 }
