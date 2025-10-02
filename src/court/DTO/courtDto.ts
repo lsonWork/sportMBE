@@ -37,6 +37,12 @@ export class CourtDto {
   pricePerHour: number;
 
   @Expose()
+  lat: string;
+
+  @Expose()
+  lng: string;
+
+  @Expose()
   @Type(() => SportTypeResponseDto) // Dùng @Type để chỉ định DTO cho object lồng nhau
   sportType: string;
 
