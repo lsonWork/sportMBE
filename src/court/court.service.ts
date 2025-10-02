@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Court } from './entities/court.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCourtRequestDto } from './DTO/createCourtRequestDto';
 import { User } from 'src/user/entities/user.entity';
@@ -19,6 +19,7 @@ import {
 import { haversineDistance } from 'src/utils/haversineDistance';
 import { NearByCourt } from './interface/NearByCourt';
 import { NearByCourtRaw } from './interface/NearByCourtRaw';
+import { CourtImage } from './entities/courtImage.entity';
 
 @Injectable()
 export class CourtService {
@@ -29,55 +30,99 @@ export class CourtService {
     private sportTypeRepository: Repository<SportType>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(CourtImage)
+    private courtImageRepository: Repository<CourtImage>,
+    private dataSource: DataSource,
   ) {}
 
   async createCourt(
     createCourtDto: CreateCourtRequestDto,
-    userId: string,
+    ownerId: string,
   ): Promise<Court> {
-    const owner = await this.userRepository.findOneBy({ userId });
+    const owner = await this.userRepository.findOneBy({ userId: ownerId });
     if (!owner) {
       throw new HttpException(
-        { message: 'Current user not found.' },
+        { message: 'Chủ sở hữu không tồn tại' },
         HttpStatus.NOT_FOUND,
       );
     }
     if (owner.role !== Role.OWNER) {
       throw new HttpException(
-        { message: 'Only owners can create courts' },
+        { message: 'Chỉ chủ sở hữu mới có thể tạo sân' },
         HttpStatus.FORBIDDEN,
       );
     }
-    const sportType = await this.sportTypeRepository.findOne({
-      where: { sportTypeId: createCourtDto.sportType },
+    const sportType = await this.sportTypeRepository.findOneBy({
+      sportTypeId: createCourtDto.sportType,
     });
     if (!sportType) {
       throw new HttpException(
-        { message: 'Sport type not found' },
+        {
+          message: `Không tìm thấy loại thể thao có id = "${createCourtDto.sportType}"`,
+        },
         HttpStatus.NOT_FOUND,
       );
     }
-    const newCourt = this.courtRepository.create({
+    const existingCourt = await this.courtRepository.findOneBy({
       courtName: createCourtDto.name,
-      address: createCourtDto.address,
-      description: createCourtDto.description,
-      pricePerHour: createCourtDto.pricePerHour,
-      subService: createCourtDto.subService,
-      owner: owner,
-      isActive: true,
-      sportType: sportType,
-      lat: createCourtDto.lat,
-      lng: createCourtDto.lng,
+      owner: { userId: ownerId },
     });
-    try {
-      const result = await this.courtRepository.save(newCourt);
-      return result;
-    } catch (error) {
-      const err = error as Error;
+    if (existingCourt) {
       throw new HttpException(
-        { message: err.message || 'Error creating court' },
+        { message: 'Đã tồn tại sân có tên này' },
+        HttpStatus.CONFLICT,
+      );
+    }
+    // 2. Bắt đầu một transaction
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 3. Tạo và lưu đối tượng Court chính
+      const newCourt = queryRunner.manager.create(Court, {
+        courtName: createCourtDto.name,
+        address: createCourtDto.address,
+        description: createCourtDto.description,
+        pricePerHour: createCourtDto.pricePerHour,
+        subService: createCourtDto.subService,
+        owner: owner,
+        isActive: true,
+        sportType: sportType,
+        lat: createCourtDto.lat,
+        lng: createCourtDto.lng,
+      });
+      const savedCourt = await queryRunner.manager.save(newCourt);
+      const { imgUrls } = createCourtDto;
+      if (imgUrls && imgUrls.length > 0) {
+        const courtImagesToSave = imgUrls.map((url) => {
+          return queryRunner.manager.create(CourtImage, {
+            imageUrl: url,
+            court: savedCourt,
+          });
+        });
+        await queryRunner.manager.save(courtImagesToSave);
+      }
+      await queryRunner.commitTransaction();
+      const foundCourt = await this.courtRepository.findOne({
+        where: { courtId: savedCourt.courtId },
+        relations: ['owner', 'sportType', 'courtImages'],
+      });
+      if (!foundCourt) {
+        throw new HttpException(
+          'Failed to re-fetch court after creation',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      return foundCourt;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new HttpException(
+        { message: error.message || 'Error creating court' },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -272,5 +317,4 @@ export class CourtService {
       distance: Math.round(Number(r.distance)),
     }));
   }
-
 }

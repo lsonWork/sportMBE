@@ -48,7 +48,6 @@ export class CourtPublicController {
         excludeExtraneousValues: true, // Rất quan trọng!
       }),
     );
-    console.log(transformedItems);
     return new Pagination<CourtDto>(transformedItems, courtPage.meta);
   }
 
