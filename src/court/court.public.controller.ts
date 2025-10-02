@@ -68,7 +68,7 @@ export class CourtPublicController {
   @Get(':id')
   async findOneById(@Param('id', ParseUUIDPipe) id: string): Promise<CourtDto> {
     const courtEntity = await this.courtService.findDetailById(id);
-    return plainToClass(CourtDto, courtEntity, {
+    return plainToClass(CourtDto, courtEntity, { 
       excludeExtraneousValues: true,
     });
   }
