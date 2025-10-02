@@ -1,6 +1,7 @@
 import { Expose, Transform, Type } from 'class-transformer';
 import { SportTypeResponseDto } from './sportTypeResponseDto';
 import { CourtImagesResponseDto } from './courtImagesResponseDto';
+import { UserResponseDTO } from 'src/user/DTO/UserDTO';
 
 export class CourtDto {
   @Expose()
@@ -41,4 +42,8 @@ export class CourtDto {
 
   @Expose()
   avgRating: number;
+
+  @Expose()
+  @Type(() => UserResponseDTO) // <-- 2. Dùng @Type để NestJS biết cách biến đổi object User
+  owner: UserResponseDTO;
 }
