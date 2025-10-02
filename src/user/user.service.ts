@@ -80,6 +80,7 @@ export class UserService {
       userId: updatedUser.userId,
       role: updatedUser.role,
       fullName: updatedUser.fullName,
+      avatarUrl: updatedUser.avatarUrl,
     };
     const token = this.jwtService.sign(payload);
     const responseDto: UpdateProfileDto = {
