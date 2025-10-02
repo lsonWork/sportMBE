@@ -131,7 +131,7 @@ export class RatingService {
       // 5. Commit
       await queryRunner.commitTransaction();
 
-      return { message: 'Rating deleted successfully' };
+      return { message: 'Rating deleted successfully!' };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
