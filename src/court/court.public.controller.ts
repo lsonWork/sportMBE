@@ -2,7 +2,9 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  Param,
   ParseIntPipe,
+  ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
 import { CourtService } from './court.service';
@@ -18,6 +20,7 @@ export class CourtPublicController {
 
   @ApiBearerAuth('access-token')
   @Get('/')
+  @Public()
   @ApiQuery({
     name: 'sportTypeId',
     required: false,
@@ -59,5 +62,14 @@ export class CourtPublicController {
       Number.parseFloat(lng),
     );
     return court;
+  }
+
+  @Public()
+  @Get(':id')
+  async findOneById(@Param('id', ParseUUIDPipe) id: string): Promise<CourtDto> {
+    const courtEntity = await this.courtService.findDetailById(id);
+    return plainToClass(CourtDto, courtEntity, {
+      excludeExtraneousValues: true,
+    });
   }
 }

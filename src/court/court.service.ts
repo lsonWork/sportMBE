@@ -73,13 +73,11 @@ export class CourtService {
         HttpStatus.CONFLICT,
       );
     }
-    // 2. Bắt đầu một transaction
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // 3. Tạo và lưu đối tượng Court chính
       const newCourt = queryRunner.manager.create(Court, {
         courtName: createCourtDto.name,
         address: createCourtDto.address,
@@ -215,15 +213,12 @@ export class CourtService {
         sportTypeId,
       });
     }
-
-    // Thêm điều kiện tìm kiếm nếu có chuỗi search
     if (search) {
       queryBuilder.andWhere(
         '(court.courtName ILIKE :search OR court.description ILIKE :search)',
         { search: `%${search}%` },
       );
     }
-    // Trả về kết quả đã phân trang
     return paginate<Court>(queryBuilder, options);
   }
 
@@ -316,5 +311,27 @@ export class CourtService {
       longitude: Number.parseFloat(String(r.lng)),
       distance: Math.round(Number(r.distance)),
     }));
+  }
+  async findDetailById(courtId: string): Promise<Court> {
+    const court = await this.courtRepository.findOne({
+      where: { courtId: courtId },
+      relations: ['owner', 'sportType', 'courtImages'],
+    });
+    if (!court) {
+      throw new HttpException(
+        `Court with ID "${courtId}" not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const ratingStats = await this.courtRepository
+      .createQueryBuilder('court')
+      .leftJoin('court.ratings', 'rating')
+      .select('COALESCE(AVG(rating.star), 0)', 'avgRating')
+      .where('court.courtId = :courtId', { courtId })
+      .getRawOne();
+
+    court.avgRating = parseFloat(ratingStats.avgRating);
+
+    return court;
   }
 }
