@@ -3,10 +3,11 @@ import { NotificationService } from './notification.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotificationGateway } from './notification.gateway';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Notification])],
-  providers: [NotificationService, NotificationGateway],
+  providers: [NotificationService, NotificationGateway, JwtService],
   exports: [TypeOrmModule, NotificationGateway], // để module khác dùng được
 })
 export class NotificationModule {}
