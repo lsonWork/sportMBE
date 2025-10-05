@@ -112,16 +112,18 @@ export class FriendService {
   }
 
   async getOneUser(currentUserId: string) {
-    const redisInstance = this.redisService.getClient();
+    const redis = this.redisService.getClient();
     const key = `requestable-user:${currentUserId}`;
 
-    const rawUser = await redisInstance.lpop(key);
+    const rawUsers = await redis.lrange(key, 0, 3);
 
-    if (!rawUser) {
-      return null;
+    if (!rawUsers || rawUsers.length === 0) {
+      return [];
     }
 
-    const user: RequestableUser = JSON.parse(rawUser) as RequestableUser;
-    return user;
+    await redis.ltrim(key, rawUsers.length, -1);
+
+    const users = rawUsers.map((u) => JSON.parse(u) as RequestableUser);
+    return users;
   }
 }
