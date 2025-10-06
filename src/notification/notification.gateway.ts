@@ -37,8 +37,6 @@ export class NotificationGateway
       client.data.user = payload;
 
       await client.join(`user-${payload.userId}`);
-
-      console.log(`${client.id} ✅ User connected`);
     } catch (error) {
       console.log(error);
       client.disconnect();

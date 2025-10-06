@@ -40,6 +40,7 @@ export class FriendRequestController {
   ) {
     const result = this.friendRequestService.createFriendRequest(
       user.userId,
+      user.fullName,
       createFriendRequestDTO,
     );
     return result;
