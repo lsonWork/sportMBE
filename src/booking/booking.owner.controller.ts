@@ -19,30 +19,30 @@ import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 export class BookingOwnerController {
   constructor(private readonly bookingService: BookingService) {}
 
-  @ApiBearerAuth('access-token')
-  @Patch(':id/confirm')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
-  async confirm(
-    @Param('id', ParseUUIDPipe) id: string,
-    @GetUser() user: JwtUser,
-  ) {
-    return this.bookingService.confirmBooking(id, user.userId);
-  }
+  // @ApiBearerAuth('access-token')
+  // @Patch(':id/confirm')
+  // @UseGuards(RolesGuard)
+  // @Roles(RoleEnum.OWNER)
+  // async confirm(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @GetUser() user: JwtUser,
+  // ) {
+  //   return this.bookingService.confirmBooking(id, user.userId);
+  // }
 
-  @ApiBearerAuth('access-token')
-  @Patch(':id/complete')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
-  async complete(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() completeBookingDto: CompleteBookingDto,
-    @GetUser() user: JwtUser,
-  ) {
-    return this.bookingService.completeBooking(
-      id,
-      completeBookingDto,
-      user.userId,
-    );
-  }
+  // @ApiBearerAuth('access-token')
+  // @Patch(':id/complete')
+  // @UseGuards(RolesGuard)
+  // @Roles(RoleEnum.OWNER)
+  // async complete(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Body() completeBookingDto: CompleteBookingDto,
+  //   @GetUser() user: JwtUser,
+  // ) {
+  //   return this.bookingService.completeBooking(
+  //     id,
+  //     completeBookingDto,
+  //     user.userId,
+  //   );
+  // }
 }

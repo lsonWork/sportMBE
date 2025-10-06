@@ -9,6 +9,7 @@ import { RequestUpdate } from 'src/request-update/entities/request-update.entity
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 import { FriendRequest } from 'src/friend-request/entities/friendRequest.entity';
 import { Rating } from 'src/rating/entities/rating.entity';
+import { BookingOrder } from 'src/booking/entities/booking-order.entity';
 
 @Entity()
 export class User {
@@ -86,4 +87,7 @@ export class User {
 
   @OneToMany(() => Rating, (rating) => rating.owner)
   ratings: Rating[];
+
+  @OneToMany(() => BookingOrder, (order) => order.user)
+  bookingOrders: BookingOrder[];
 }
