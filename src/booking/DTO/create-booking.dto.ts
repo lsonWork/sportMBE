@@ -1,30 +1,45 @@
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsDateString,
   IsNotEmpty,
   IsOptional,
+  IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
+
+class AmPmSlotsDto {
+  @IsArray()
+  @IsString({ each: true })
+  slotIds: string[];
+}
+
+class SelectionDto {
+  @IsDateString()
+  date: string;
+
+  @ValidateNested()
+  @Type(() => AmPmSlotsDto)
+  am: AmPmSlotsDto;
+
+  @ValidateNested()
+  @Type(() => AmPmSlotsDto)
+  pm: AmPmSlotsDto;
+}
 
 export class CreateBookingDto {
   @IsUUID()
   @IsNotEmpty()
   courtId: string;
 
-  @IsDateString()
-  @IsNotEmpty()
-  startTime: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  endTime: string;
-
-  @IsDateString()
-  @IsNotEmpty()
-  bookingDate: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SelectionDto)
+  selections: SelectionDto[];
 
   @IsOptional()
   @IsArray()
-  @IsUUID('4', { each: true, message: 'Mỗi inviteeId phải là một UUID hợp lệ' })
-  inviteeIds?: string[]; // Đổi thành một mảng các chuỗi UUID
+  @IsUUID('4', { each: true })
+  inviteeIds?: string[];
 }
