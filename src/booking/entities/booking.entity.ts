@@ -1,6 +1,5 @@
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 import { Court } from 'src/court/entities/court.entity';
-import { Payment } from 'src/payment/entities/payment.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
@@ -8,9 +7,9 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BookingOrder } from './booking-order.entity';
 
 @Entity()
 export class Booking {
@@ -42,13 +41,13 @@ export class Booking {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @OneToOne(() => Payment, (payment) => payment.booking)
-  payment: Payment;
-
   @ManyToOne(() => Court, (court) => court.bookings)
   @JoinColumn({ name: 'courtId' })
   court: Court;
 
   @OneToMany(() => BookingInvitee, (invitee) => invitee.booking)
   invitees: BookingInvitee[];
+
+  @ManyToOne(() => BookingOrder, (order) => order.bookings)
+  bookingOrder: BookingOrder;
 }

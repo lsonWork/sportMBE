@@ -1,3 +1,4 @@
+import { NotificationType } from 'src/common/enum/NotificationType';
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
@@ -17,6 +18,12 @@ export class Notification {
 
   @Column()
   createdAt: Date;
+
+  @Column()
+  type: NotificationType;
+
+  @Column()
+  userId: string;
 
   @ManyToOne(() => User, (user) => user.notifications)
   @JoinColumn({ name: 'userId' })

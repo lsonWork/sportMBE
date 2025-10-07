@@ -1,11 +1,12 @@
-import { Booking } from 'src/booking/entities/booking.entity';
+import { BookingOrder } from 'src/booking/entities/booking-order.entity';
+import { PaymentMethod } from 'src/common/enum/PaymentMethod';
+import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 import { User } from 'src/user/entities/user.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -18,10 +19,10 @@ export class Payment {
   amount: number;
 
   @Column()
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
 
   @Column()
-  paymentStatus: string;
+  paymentStatus: PaymentStatus;
 
   @Column()
   transactionCode: string;
@@ -30,7 +31,7 @@ export class Payment {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @OneToOne(() => Booking, (booking) => booking.payment)
-  @JoinColumn({ name: 'bookingId' })
-  booking: Booking;
+  @ManyToOne(() => BookingOrder, (order) => order.payments)
+  @JoinColumn({ name: 'bookingOrderId' })
+  bookingOrder: BookingOrder;
 }

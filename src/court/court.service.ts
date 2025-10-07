@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Court } from './entities/court.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Between, DataSource, In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateCourtRequestDto } from './DTO/createCourtRequestDto';
 import { User } from 'src/user/entities/user.entity';
@@ -20,6 +20,9 @@ import { haversineDistance } from 'src/utils/haversineDistance';
 import { NearByCourt } from './interface/NearByCourt';
 import { NearByCourtRaw } from './interface/NearByCourtRaw';
 import { CourtImage } from './entities/courtImage.entity';
+import { Booking } from 'src/booking/entities/booking.entity';
+import { BookingStatus } from 'src/common/enum/BookingStatus';
+import { TimeSlot } from './interface/TimeSlots';
 
 @Injectable()
 export class CourtService {
@@ -32,6 +35,8 @@ export class CourtService {
     private userRepository: Repository<User>,
     @InjectRepository(CourtImage)
     private courtImageRepository: Repository<CourtImage>,
+    @InjectRepository(Booking)
+    private bookingRepository: Repository<Booking>,
     private dataSource: DataSource,
   ) {}
 
@@ -333,5 +338,50 @@ export class CourtService {
     court.avgRating = parseFloat(ratingStats.avgRating);
 
     return court;
+  }
+
+  async getAvailableSlots(courtId: string, date: string): Promise<TimeSlot[]> {
+    // 1. Tạo danh sách tất cả các slot có thể có trong ngày (ví dụ: từ 5h đến 23h)
+    const allSlots: TimeSlot[] = [];
+    for (let i = 5; i < 23; i++) {
+      const startHour = i.toString().padStart(2, '0');
+      const endHour = (i + 1).toString().padStart(2, '0');
+      allSlots.push({
+        id: `slot-${startHour}00-${endHour}00`,
+        start: `${startHour}:00`,
+        end: `${endHour}:00`,
+        locked: false,
+      });
+    }
+
+    // 2. Tìm tất cả các booking đã tồn tại cho sân này trong ngày này
+    const searchDate = new Date(date);
+    const startOfDay = new Date(searchDate);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(searchDate);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const bookedSlots = await this.bookingRepository.find({
+      where: {
+        court: { courtId: courtId },
+        startTime: Between(startOfDay, endOfDay),
+        status: In([BookingStatus.CONFIRMED, BookingStatus.PENDING_DEPOSIT]),
+      },
+    });
+
+    // Tạo một Set chứa giờ bắt đầu của các slot đã bị khóa để tra cứu nhanh
+    const bookedHours = new Set(
+      bookedSlots.map((b) => b.startTime.getUTCHours()),
+    );
+
+    // 3. Đánh dấu các slot đã bị khóa
+    allSlots.forEach((slot) => {
+      const slotStartHour = parseInt(slot.start.split(':')[0]);
+      if (bookedHours.has(slotStartHour)) {
+        slot.locked = true;
+      }
+    });
+
+    return allSlots;
   }
 }

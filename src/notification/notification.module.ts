@@ -8,6 +8,6 @@ import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [TypeOrmModule.forFeature([Notification])],
   providers: [NotificationService, NotificationGateway, JwtService],
-  exports: [TypeOrmModule, NotificationGateway], // để module khác dùng được
+  exports: [TypeOrmModule, NotificationGateway, NotificationService], // để module khác dùng được
 })
 export class NotificationModule {}

@@ -3,6 +3,7 @@ import {
   DefaultValuePipe,
   Get,
   Param,
+  ParseDatePipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Query,
@@ -68,8 +69,16 @@ export class CourtPublicController {
   @Get(':id')
   async findOneById(@Param('id', ParseUUIDPipe) id: string): Promise<CourtDto> {
     const courtEntity = await this.courtService.findDetailById(id);
-    return plainToClass(CourtDto, courtEntity, { 
+    return plainToClass(CourtDto, courtEntity, {
       excludeExtraneousValues: true,
     });
+  }
+  @Public()
+  @Get(':id/slots')
+  async getAvailableSlots(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('date', new ParseDatePipe()) date: string, // YYYY-MM-DD
+  ) {
+    return this.courtService.getAvailableSlots(id, date);
   }
 }

@@ -2,19 +2,26 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { CreateFriendRequestDTO } from './DTO/CreateFriendRequestDTO';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FriendRequest } from './entities/friendRequest.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { validate as isUuid } from 'uuid';
 import { UpdateFriendRequestDto } from './DTO/UpdateFriendRequestDto';
 import { paginate } from 'nestjs-typeorm-paginate';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/common/enum/NotificationType';
+import { Notification } from 'src/notification/entities/notification.entity';
+import { NotificationGateway } from 'src/notification/notification.gateway';
 
 @Injectable()
 export class FriendRequestService {
   constructor(
     @InjectRepository(FriendRequest)
     private readonly friendRequestRepository: Repository<FriendRequest>,
+    private readonly dataSource: DataSource,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
   async createFriendRequest(
     fromId: string,
+    fullName: string,
     createFriendRequestDTO: CreateFriendRequestDTO,
   ) {
     const { toId } = createFriendRequestDTO;
@@ -28,22 +35,48 @@ export class FriendRequestService {
       toId,
     });
 
-    if (!existRequest?.status) {
+    if (existRequest && !existRequest?.status) {
       throw new HttpException('Lời mời kết bạn đã tồn tại', 400);
     }
 
-    if (existRequest?.status) {
+    if (existRequest && existRequest?.status) {
       throw new HttpException('Hai bạn đã là bạn bè', 400);
     }
 
-    const newRequest = this.friendRequestRepository.create({
-      fromId,
-      toId,
-      status: false,
-      createdAt: new Date(),
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const newRequest = queryRunner.manager.create(FriendRequest, {
+        fromId,
+        toId,
+        status: false,
+        createdAt: new Date(),
+      });
+      await queryRunner.manager.save(newRequest);
 
-    return await this.friendRequestRepository.save(newRequest);
+      const newNoti = queryRunner.manager.create(Notification, {
+        content: `Lời mời kết bạn mới từ ${fullName}`,
+        createdAt: new Date(),
+        userId: toId,
+        type: NotificationType.FRIEND_REQUEST,
+      });
+
+      await queryRunner.manager.save(newNoti);
+      await queryRunner.commitTransaction();
+
+      this.notificationGateway.emitEvent(
+        toId,
+        newNoti,
+        NotificationType.FRIEND_REQUEST,
+      );
+      return newRequest;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getFriendRequest(
@@ -72,6 +105,7 @@ export class FriendRequestService {
 
   async updateFriendRequest(
     userId: string,
+    fullName: string,
     id: string,
     updateFriendRequestDto: UpdateFriendRequestDto,
   ) {
@@ -86,8 +120,35 @@ export class FriendRequestService {
     if (status === false) {
       return await this.friendRequestRepository.remove(request);
     } else {
-      request.status = status;
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        request.status = status;
+        await queryRunner.manager.save(request);
+
+        const newNoti = queryRunner.manager.create(Notification, {
+          content: `${fullName} đã chấp nhận lời mời kết bạn`,
+          createdAt: new Date(),
+          userId: request.fromId,
+          type: NotificationType.FRIEND_ACCEPTED,
+        });
+        await queryRunner.manager.save(newNoti);
+        await queryRunner.commitTransaction();
+
+        this.notificationGateway.emitEvent(
+          request.fromId,
+          newNoti,
+          NotificationType.FRIEND_ACCEPTED,
+        );
+
+        return request;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
     }
-    return await this.friendRequestRepository.save(request);
   }
 }
