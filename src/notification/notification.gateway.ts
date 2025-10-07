@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { JwtPayload } from 'src/auth/jwt-strategy';
+import { NotificationType } from 'src/common/enum/NotificationType';
 interface AuthenticatedSocket extends Socket {
   data: {
     user?: JwtPayload;
@@ -50,5 +51,9 @@ export class NotificationGateway
     } else {
       console.log(`❌ Unknown user disconnected`);
     }
+  }
+
+  emitEvent(toUserId: string, payload: any, type: NotificationType) {
+    this.server.to(`user-${toUserId}`).emit(type, payload);
   }
 }

@@ -82,6 +82,7 @@ export class FriendRequestController {
   ) {
     return this.friendRequestService.updateFriendRequest(
       user.userId,
+      user.fullName,
       id,
       updateFriendRequestDto,
     );
