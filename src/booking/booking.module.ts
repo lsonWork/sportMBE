@@ -9,11 +9,19 @@ import { Court } from 'src/court/entities/court.entity';
 import { User } from 'src/user/entities/user.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
+import { BookingOrder } from './entities/booking-order.entity';
 
 @Module({
   providers: [BookingService],
   imports: [
-    TypeOrmModule.forFeature([Booking, Court, User, Payment, BookingInvitee]),
+    TypeOrmModule.forFeature([
+      Booking,
+      Court,
+      User,
+      Payment,
+      BookingInvitee,
+      BookingOrder,
+    ]),
     BookingInviteeModule,
   ],
   controllers: [BookingController, BookingOwnerController],
