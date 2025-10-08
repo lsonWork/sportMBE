@@ -42,4 +42,8 @@ export class CreateBookingDto {
   @IsArray()
   @IsUUID('4', { each: true })
   inviteeIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

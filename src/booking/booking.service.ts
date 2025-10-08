@@ -38,7 +38,7 @@ export class BookingService {
     createBookingDto: CreateBookingDto,
     userId: string,
   ): Promise<BookingOrder> {
-    const { courtId, selections, inviteeIds } = createBookingDto;
+    const { courtId, selections, inviteeIds, notes } = createBookingDto;
     const user = await this.userRepository.findOneBy({ userId });
     if (!user) {
       throw new HttpException(
@@ -102,6 +102,7 @@ export class BookingService {
         totalPrice: totalBookingPrice,
         totalDeposit,
         status: BookingStatus.PENDING_DEPOSIT,
+        notes: notes,
       });
       const savedOrder = await queryRunner.manager.save(newOrder);
 

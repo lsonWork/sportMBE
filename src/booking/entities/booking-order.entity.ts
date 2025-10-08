@@ -32,6 +32,9 @@ export class BookingOrder {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
   @ManyToOne(() => User, (user) => user.bookingOrders)
   user: User;
 
