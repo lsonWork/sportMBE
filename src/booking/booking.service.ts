@@ -168,6 +168,9 @@ export class BookingService {
       await queryRunner.release();
     }
   }
+  /**
+   * Owner xác nhận đã nhận tiền cọc cho cả một đơn hàng.
+   */
   async confirmBookingOrder(
     orderId: string,
     ownerId: string,
@@ -192,6 +195,12 @@ export class BookingService {
           HttpStatus.NOT_FOUND,
         );
       }
+      if (!bookingOrder.bookings || bookingOrder.bookings.length === 0) {
+        throw new HttpException(
+          'Đơn hàng không hợp lệ.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       if (bookingOrder.bookings[0].court.owner.userId !== ownerId) {
         throw new HttpException(
           'Bạn không có quyền xác nhận đơn hàng này.',
@@ -205,13 +214,11 @@ export class BookingService {
         );
       }
 
-      // Cập nhật trạng thái của tất cả booking con
-      for (const booking of bookingOrder.bookings) {
-        booking.status = BookingStatus.CONFIRMED;
-      }
+      bookingOrder.bookings.forEach(
+        (b) => (b.status = BookingStatus.CONFIRMED),
+      );
       await queryRunner.manager.save(bookingOrder.bookings);
 
-      // Cập nhật trạng thái của payment
       const depositPayment = bookingOrder.payments.find(
         (p) => p.paymentMethod === PaymentMethod.DPS,
       );
@@ -220,7 +227,6 @@ export class BookingService {
         await queryRunner.manager.save(depositPayment);
       }
 
-      // Cập nhật trạng thái của order tổng
       bookingOrder.status = BookingStatus.CONFIRMED;
       const savedOrder = await queryRunner.manager.save(bookingOrder);
 
@@ -242,45 +248,60 @@ export class BookingService {
     ownerId: string,
     completeBookingDto: CompleteBookingDto,
   ): Promise<BookingOrder> {
-    const bookingOrder = await this.bookingOrderRepository.findOne({
-      where: { orderId },
-      relations: ['bookings', 'bookings.court', 'bookings.court.owner', 'user'],
-    });
-    if (!bookingOrder) {
-      throw new HttpException(
-        `Không tìm thấy đơn hàng với ID "${orderId}"`,
-        HttpStatus.NOT_FOUND,
+    // Sử dụng transaction để đảm bảo toàn vẹn dữ liệu
+    return this.dataSource.transaction(async (transactionalEntityManager) => {
+      const bookingOrder = await transactionalEntityManager.findOne(
+        BookingOrder,
+        {
+          where: { orderId },
+          relations: [
+            'bookings',
+            'bookings.court',
+            'bookings.court.owner',
+            'user',
+          ],
+        },
       );
-    }
-    if (bookingOrder.bookings[0].court.owner.userId !== ownerId) {
-      throw new HttpException(
-        'Bạn không có quyền hoàn tất đơn hàng này.',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    if (bookingOrder.status !== BookingStatus.CONFIRMED) {
-      throw new HttpException(
-        `Không thể hoàn tất vì đơn hàng đang ở trạng thái '${bookingOrder.status}'`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const remainingAmount = bookingOrder.totalPrice - bookingOrder.totalDeposit;
-    const finalPayment = this.paymentRepository.create({
-      amount: remainingAmount,
-      paymentMethod: completeBookingDto.finalPaymentMethod,
-      paymentStatus: PaymentStatus.SUCCESS,
-      bookingOrder: bookingOrder,
-      user: bookingOrder.user,
-    });
-    await this.paymentRepository.save(finalPayment);
+      if (!bookingOrder) {
+        throw new HttpException(
+          `Không tìm thấy đơn hàng với ID "${orderId}"`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (bookingOrder.bookings[0].court.owner.userId !== ownerId) {
+        throw new HttpException(
+          'Bạn không có quyền hoàn tất đơn hàng này.',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+      if (bookingOrder.status !== BookingStatus.CONFIRMED) {
+        throw new HttpException(
+          `Không thể hoàn tất vì đơn hàng đang ở trạng thái '${bookingOrder.status}'`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
-    // Cập nhật trạng thái cho tất cả booking con và order tổng
-    bookingOrder.bookings.forEach((b) => (b.status = BookingStatus.COMPLETED));
-    await this.bookingRepository.save(bookingOrder.bookings);
+      const remainingAmount =
+        bookingOrder.totalPrice - bookingOrder.totalDeposit;
+      const finalPayment = transactionalEntityManager.create(Payment, {
+        amount: remainingAmount,
+        paymentMethod: completeBookingDto.finalPaymentMethod,
+        paymentStatus: PaymentStatus.SUCCESS,
+        bookingOrder: bookingOrder,
+        user: bookingOrder.user,
+      });
+      await transactionalEntityManager.save(finalPayment);
 
-    bookingOrder.status = BookingStatus.COMPLETED;
-    return this.bookingOrderRepository.save(bookingOrder);
+      bookingOrder.bookings.forEach(
+        (b) => (b.status = BookingStatus.COMPLETED),
+      );
+      await transactionalEntityManager.save(bookingOrder.bookings);
+
+      bookingOrder.status = BookingStatus.COMPLETED;
+      return transactionalEntityManager.save(bookingOrder);
+    });
   }
+
   /**
    * Người dùng tự hủy toàn bộ đơn hàng của mình.
    */
@@ -288,39 +309,45 @@ export class BookingService {
     orderId: string,
     userId: string,
   ): Promise<BookingOrder> {
-    const bookingOrder = await this.bookingOrderRepository.findOne({
-      where: { orderId },
-      relations: ['user', 'bookings'],
+    return this.dataSource.transaction(async (transactionalEntityManager) => {
+      const bookingOrder = await transactionalEntityManager.findOne(
+        BookingOrder,
+        {
+          where: { orderId },
+          relations: ['user', 'bookings'],
+        },
+      );
+
+      if (!bookingOrder) {
+        throw new HttpException(
+          `Không tìm thấy đơn hàng với ID "${orderId}"`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (bookingOrder.user.userId !== userId) {
+        throw new HttpException(
+          'Bạn chỉ có thể hủy các đơn hàng của chính mình.',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+      if (
+        bookingOrder.status === BookingStatus.COMPLETED ||
+        bookingOrder.status === BookingStatus.CANCELLED
+      ) {
+        throw new HttpException(
+          `Không thể hủy vì đơn hàng đã ở trạng thái '${bookingOrder.status}'.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      bookingOrder.bookings.forEach(
+        (b) => (b.status = BookingStatus.CANCELLED),
+      );
+      await transactionalEntityManager.save(bookingOrder.bookings);
+
+      bookingOrder.status = BookingStatus.CANCELLED;
+      return transactionalEntityManager.save(bookingOrder);
     });
-
-    if (!bookingOrder) {
-      throw new HttpException(
-        `Không tìm thấy đơn hàng với ID "${orderId}"`,
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (bookingOrder.user.userId !== userId) {
-      throw new HttpException(
-        'Bạn chỉ có thể hủy các đơn hàng của chính mình.',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    if (
-      bookingOrder.status === BookingStatus.COMPLETED ||
-      bookingOrder.status === BookingStatus.CANCELLED
-    ) {
-      throw new HttpException(
-        `Không thể hủy vì đơn hàng đã ở trạng thái '${bookingOrder.status}'.`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    // Cập nhật trạng thái cho tất cả booking con và order tổng
-    bookingOrder.bookings.forEach((b) => (b.status = BookingStatus.CANCELLED));
-    await this.bookingRepository.save(bookingOrder.bookings);
-
-    bookingOrder.status = BookingStatus.CANCELLED;
-    return this.bookingOrderRepository.save(bookingOrder);
   }
 
   /**
@@ -331,18 +358,17 @@ export class BookingService {
     options: IPaginationOptions,
     status?: BookingStatus,
   ): Promise<Pagination<BookingOrder>> {
-    const queryBuilder =
-      this.bookingOrderRepository.createQueryBuilder('order');
+    const queryBuilder = this.bookingOrderRepository.createQueryBuilder('bo');
 
     queryBuilder
-      .where('order.userId = :userId', { userId })
-      // Lấy chi tiết các slot (booking) và thông tin sân
-      .leftJoinAndSelect('order.bookings', 'booking')
+      // SỬA LẠI ĐIỀU KIỆN WHERE Ở ĐÂY
+      .where('bo.userUserId = :userId', { userId })
+      .leftJoinAndSelect('bo.bookings', 'booking')
       .leftJoinAndSelect('booking.court', 'court')
-      .orderBy('order.createdAt', 'DESC');
+      .orderBy('bo.createdAt', 'DESC');
 
     if (status) {
-      queryBuilder.andWhere('order.status = :status', { status });
+      queryBuilder.andWhere('bo.status = :status', { status });
     }
 
     return paginate<BookingOrder>(queryBuilder, options);
@@ -389,20 +415,22 @@ export class BookingService {
     }
 
     const queryBuilder =
-      this.bookingOrderRepository.createQueryBuilder('order');
+      this.bookingOrderRepository.createQueryBuilder('bookingOrder');
     queryBuilder
-      // Tìm các order có chứa booking của sân này
-      .innerJoin('order.bookings', 'booking', 'booking.courtId = :courtId', {
-        courtId,
-      })
-      // Lấy các thông tin chi tiết cần thiết
-      .leftJoinAndSelect('order.user', 'user')
-      .leftJoinAndSelect('order.bookings', 'bookingDetails') // Lấy lại chi tiết booking
+      // JOIN với các booking con để có thể lọc theo courtId
+      .innerJoin('bookingOrder.bookings', 'booking')
+      // Lấy các thông tin chi tiết cần thiết để hiển thị
+      .leftJoinAndSelect('bookingOrder.user', 'user')
+      .leftJoinAndSelect('bookingOrder.bookings', 'bookingDetails')
       .leftJoinAndSelect('bookingDetails.court', 'courtDetails')
-      .orderBy('order.createdAt', 'DESC');
+      // Điều kiện lọc chính
+      .where('booking.courtId = :courtId', { courtId })
+      .orderBy('bookingOrder.createdAt', 'DESC')
+      // Đảm bảo mỗi order chỉ xuất hiện một lần
+      .distinct(true);
 
     if (status) {
-      queryBuilder.andWhere('order.status = :status', { status });
+      queryBuilder.andWhere('bookingOrder.status = :status', { status });
     }
     if (search) {
       queryBuilder.andWhere('user.fullName ILIKE :search', {
