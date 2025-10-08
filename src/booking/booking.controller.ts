@@ -84,40 +84,40 @@ export class BookingController {
     return this.bookingService.createBooking(createBookingDto, user.userId);
   }
 
-  // @ApiBearerAuth('access-token')
-  // @Patch(':id/cancel-by-user')
-  // async cancelByUser(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @GetUser() user: JwtUser,
-  // ) {
-  //   return this.bookingService.cancelBookingByUser(id, user.userId);
-  // }
+  @ApiBearerAuth('access-token')
+  @Patch(':id/cancel-by-user')
+  async cancelByUser(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: JwtUser,
+  ) {
+    return this.bookingService.cancelBookingOrder(id, user.userId);
+  }
 
-  // @ApiBearerAuth('access-token')
-  // @Get('/my-bookings')
-  // @ApiQuery({
-  //   name: 'status',
-  //   required: false,
-  //   type: String,
-  //   description:
-  //     'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
-  // })
-  // @ApiQuery({
-  //   name: 'search',
-  //   required: false,
-  //   type: String,
-  //   description: 'Từ khóa tìm kiếm',
-  // })
-  // async getMyBookings(
-  //   @GetUser() user: JwtUser,
-  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-  //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  //   @Query('status') status?: BookingStatus,
-  // ) {
-  //   return this.bookingService.getMyBookings(
-  //     user.userId,
-  //     { page, limit },
-  //     status,
-  //   );
-  // }
+  @ApiBearerAuth('access-token')
+  @Get('/my-bookings')
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description:
+      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Từ khóa tìm kiếm',
+  })
+  async getMyBookings(
+    @GetUser() user: JwtUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Query('status') status?: BookingStatus,
+  ) {
+    return this.bookingService.getMyBookingOrders(
+      user.userId,
+      { page, limit },
+      status,
+    );
+  }
 }
