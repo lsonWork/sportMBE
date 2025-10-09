@@ -186,7 +186,7 @@ export class CourtController {
     required: false,
     type: String,
     description:
-      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
+      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED)',
   })
   @ApiQuery({
     name: 'search',
@@ -199,8 +199,7 @@ export class CourtController {
     @GetUser() user: JwtUser,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Query('status', new DefaultValuePipe(BookingStatus.CONFIRMED))
-    status?: BookingStatus,
+    @Query('status') status?: BookingStatus,
     @Query('search') search?: string,
   ) {
     return this.bookingService.getBookingOrdersForCourt(
