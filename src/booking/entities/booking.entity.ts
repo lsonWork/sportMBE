@@ -25,13 +25,13 @@ export class Booking {
   @Column()
   endTime: Date;
 
-  @Column()
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   totalPrice: number;
 
   @Column()
   status: string;
 
-  @Column()
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   deposit: number;
 
   @Column()
