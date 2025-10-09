@@ -16,10 +16,10 @@ export class BookingOrder {
   @PrimaryGeneratedColumn('uuid')
   orderId: string;
 
-  @Column()
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   totalPrice: number;
 
-  @Column()
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   totalDeposit: number;
 
   @Column({

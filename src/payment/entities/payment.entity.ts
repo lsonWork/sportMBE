@@ -15,7 +15,7 @@ export class Payment {
   @PrimaryGeneratedColumn('uuid')
   paymentId: string;
 
-  @Column()
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   amount: number;
 
   @Column()
