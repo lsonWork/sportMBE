@@ -104,7 +104,7 @@ export class BookingController {
     required: false,
     type: String,
     description:
-      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELED) Default là CONFIRMED',
+      'Trạng thái của booking (có thể là PENDING_DEPOSIT, CONFIRMED, COMPLETED, CANCELLED) Default là CONFIRMED',
   })
   @ApiQuery({
     name: 'search',
