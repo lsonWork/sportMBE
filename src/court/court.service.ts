@@ -411,4 +411,23 @@ export class CourtService {
 
     return allSlots;
   }
+
+  async getBookedCourtsByUser(
+    userId: string,
+    options: IPaginationOptions,
+  ): Promise<Pagination<Court>> {
+    const queryBuilder = this.courtRepository.createQueryBuilder('court');
+
+    queryBuilder
+      .innerJoin('court.bookings', 'booking')
+      .leftJoinAndSelect('court.owner', 'owner')
+      .leftJoinAndSelect('court.sportType', 'sportType')
+      .leftJoinAndSelect('court.courtImages', 'courtImages')
+      .where('booking.userId = :userId', { userId })
+      .groupBy(
+        'court.courtId, owner.userId, sportType.sportTypeId, courtImages.imageId',
+      );
+
+    return paginate<Court>(queryBuilder, options);
+  }
 }
