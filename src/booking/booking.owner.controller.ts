@@ -38,7 +38,7 @@ export class BookingOwnerController {
     schema: {
       type: 'object',
       properties: {
-        PaymentMethod: {
+        finalPaymentMethod: {
           type: 'string',
           example: 'CASH/BANK_TRANSFER',
         },
