@@ -279,9 +279,25 @@ export class CourtService {
 
     // SQL an toàn: tính distance trong subquery (có cast sang double precision để tránh lỗi khi c.lat/c.lng là text)
     const sql = `
-      SELECT q."courtId" AS id, q."courtName" AS name, q.lat AS lat, q.lng AS lng, q.distance AS distance
+      SELECT 
+        q."courtId" AS id, 
+        q."courtName" AS name, 
+        q."address" AS address,
+        q."pricePerHour" AS "pricePerHour",
+        q."avgRating" AS "avgRating",
+        q.lat AS lat, 
+        q.lng AS lng, 
+        q.distance AS distance,
+        MIN(ci."imageUrl") AS "imageUrl"
       FROM (
-        SELECT c."courtId", c."courtName", c.lat, c.lng,
+        SELECT 
+          c."courtId", 
+          c."courtName", 
+          c."address",
+          c."pricePerHour",
+          c."avgRating",
+          c.lat, 
+          c.lng,
           (
             6371000 * 2 * asin(
               sqrt(
@@ -295,8 +311,10 @@ export class CourtService {
         WHERE CAST(c.lat AS double precision) BETWEEN $3 AND $4
           AND CAST(c.lng AS double precision) BETWEEN $5 AND $6
       ) q
+      LEFT JOIN "court_image" ci ON ci."courtId" = q."courtId"
       WHERE q.distance <= $7
-      ORDER BY q.distance ASC;
+      GROUP BY q."courtId", q."courtName", q."address", q."pricePerHour", q."avgRating", q.lat, q.lng, q.distance
+      ORDER BY q.distance ASC; 
     `;
 
     const params = [lat, lng, minLat, maxLat, minLng, maxLng, radius];
@@ -307,7 +325,12 @@ export class CourtService {
       lat: string | number;
       lng: string | number;
       distance: number;
+      pricePerHour: number;
+      avgRating: number;
+      address: string;
+      imageUrl: string;
     }> = await this.courtRepository.query(sql, params);
+    console.log(rows);
 
     return rows.map((r) => ({
       id: String(r.id),
@@ -315,6 +338,10 @@ export class CourtService {
       latitude: Number.parseFloat(String(r.lat)),
       longitude: Number.parseFloat(String(r.lng)),
       distance: Math.round(Number(r.distance)),
+      pricePerHour: r.pricePerHour,
+      avgRating: r.avgRating,
+      address: r.address,
+      imageUrl: r.imageUrl,
     }));
   }
   async findDetailById(courtId: string): Promise<Court> {

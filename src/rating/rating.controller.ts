@@ -31,6 +31,7 @@ export class RatingController {
       properties: {
         courtId: { type: 'string' },
         star: { type: 'number' },
+        content: { type: 'string' },
       },
     },
   })
