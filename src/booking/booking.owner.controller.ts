@@ -40,7 +40,8 @@ export class BookingOwnerController {
       properties: {
         PaymentMethod: {
           type: 'string',
-          example: 'CASH/DEPOSIT/BANK_TRANSFER',
+          example: 'CASH',
+          description: 'CASH/BANK_TRANSFER',
         },
       },
     },
