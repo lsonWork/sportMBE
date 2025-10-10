@@ -14,6 +14,8 @@ import { Pagination } from 'nestjs-typeorm-paginate';
 import { CourtDto } from './DTO/courtDto';
 import { plainToClass } from 'class-transformer';
 import { Public } from 'src/auth/public.decorator';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('courts')
 export class CourtPublicController {
@@ -46,13 +48,34 @@ export class CourtPublicController {
       sportTypeId,
       search,
     );
-    console.log(courtPage);
     const transformedItems = courtPage.items.map((court) =>
       plainToClass(CourtDto, court, {
         excludeExtraneousValues: true, // Rất quan trọng!
       }),
     );
     return new Pagination<CourtDto>(transformedItems, courtPage.meta);
+  }
+
+  @Get('my-booked-courts')
+  @ApiBearerAuth('access-token')
+  async getMyBookedCourts(
+    @GetUser() user: JwtUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ) {
+    const courtsPage = await this.courtService.getBookedCourtsByUser(
+      user.userId,
+      {
+        page,
+        limit,
+      },
+    );
+    const transformedItems = courtsPage.items.map((court) =>
+      plainToClass(CourtDto, court, {
+        excludeExtraneousValues: true,
+      }),
+    );
+    return new Pagination<CourtDto>(transformedItems, courtsPage.meta);
   }
 
   @Public()
