@@ -219,7 +219,7 @@ export class CourtController {
     required: false,
     type: String,
     description:
-      'Trạng thái của giao dịch (PENDING, COMPLETED, FAILED) Default là PENDING',
+      'Trạng thái của giao dịch (PENDING, COMPLETED, FAILED)',
   })
   @ApiQuery({
     name: 'search',
@@ -232,7 +232,7 @@ export class CourtController {
     @GetUser() user: JwtUser,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Query('status', new DefaultValuePipe(PaymentStatus.SUCCESS))
+    @Query('status')
     status?: PaymentStatus,
   ) {
     return this.paymentService.getPaymentsForCourt(
