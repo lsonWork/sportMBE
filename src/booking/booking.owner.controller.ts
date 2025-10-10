@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { Role as RoleEnum } from 'src/common/enum/Role';
@@ -34,6 +34,17 @@ export class BookingOwnerController {
   @Patch(':id/complete')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        PaymentMethod: {
+          type: 'string',
+          example: 'CASH/DEPOSIT/BANK_TRANSFER',
+        },
+      },
+    },
+  })
   async complete(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() completeBookingDto: CompleteBookingDto,
