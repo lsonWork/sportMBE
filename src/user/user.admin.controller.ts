@@ -96,4 +96,12 @@ export class UserAdminController {
       excludeExtraneousValues: true,
     });
   }
+
+  @ApiBearerAuth('access-token')
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async updateToOwner(@Param('id') id: string): Promise<void> {
+    return this.userService.updateClientToOwner(id);
+  }
 }

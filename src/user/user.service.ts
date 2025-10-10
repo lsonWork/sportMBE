@@ -95,7 +95,17 @@ export class UserService {
       gender: updatedUser.gender,
       token: token,
     };
-    console.log('Updated User:', responseDto);
     return responseDto;
+  }
+  async updateClientToOwner(userId: string): Promise<void> {
+    const user = await this.findOneById(userId);
+    if (!user) {
+      throw new HttpException(
+        { message: 'User not found' },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    user.role = Role.OWNER;
+    await this.userRepository.save(user);
   }
 }
