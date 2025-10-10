@@ -301,6 +301,7 @@ export class BookingService {
         paymentStatus: PaymentStatus.SUCCESS,
         bookingOrder: bookingOrder,
         user: bookingOrder.user,
+        transactionCode: `FNL-${Date.now()}`,
       });
       await transactionalEntityManager.save(finalPayment);
 
