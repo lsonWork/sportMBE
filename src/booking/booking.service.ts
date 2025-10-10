@@ -62,9 +62,23 @@ export class BookingService {
       const slotsToBook: { startTime: Date; endTime: Date }[] = [];
       for (const selection of selections) {
         const date = selection.date;
-        const allSlotIds = [...selection.am.slotIds, ...selection.pm.slotIds];
-        for (const slotId of allSlotIds) {
+
+        // Xử lý các slot AM
+        for (const slotId of selection.am.slotIds) {
           const startHour = parseInt(slotId.substring(5, 7));
+          const startTime = new Date(date);
+          startTime.setUTCHours(startHour, 0, 0, 0);
+          const endTime = new Date(date);
+          endTime.setUTCHours(startHour + 1, 0, 0, 0);
+          slotsToBook.push({ startTime, endTime });
+        }
+
+        // Xử lý các slot PM
+        for (const slotId of selection.pm.slotIds) {
+          let startHour = parseInt(slotId.substring(5, 7));
+          if (startHour < 12) {
+            startHour += 12;
+          }
           const startTime = new Date(date);
           startTime.setUTCHours(startHour, 0, 0, 0);
           const endTime = new Date(date);
