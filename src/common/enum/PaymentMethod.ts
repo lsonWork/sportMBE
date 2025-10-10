@@ -1,5 +1,5 @@
 export enum PaymentMethod {
-  COD = 'COD',
+  COD = 'CASH',
   DPS = 'DEPOSIT',
   BANK_TRANSFER = 'BANK_TRANSFER',
 }

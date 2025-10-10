@@ -60,29 +60,26 @@ export class BookingService {
 
     try {
       const slotsToBook: { startTime: Date; endTime: Date }[] = [];
+
+      // Xử lý và chuẩn bị các slot cần đặt
       for (const selection of selections) {
         const date = selection.date;
-
-        // Xử lý các slot AM
-        for (const slotId of selection.am.slotIds) {
-          const startHour = parseInt(slotId.substring(5, 7));
-          const startTime = new Date(date);
-          startTime.setUTCHours(startHour, 0, 0, 0);
-          const endTime = new Date(date);
-          endTime.setUTCHours(startHour + 1, 0, 0, 0);
-          slotsToBook.push({ startTime, endTime });
-        }
-
-        // Xử lý các slot PM
-        for (const slotId of selection.pm.slotIds) {
+        const allSlotIds = [...selection.am.slotIds, ...selection.pm.slotIds];
+        for (const slotId of allSlotIds) {
+          // --- PHẦN SỬA LỖI MÚI GIỜ ---
           let startHour = parseInt(slotId.substring(5, 7));
-          if (startHour < 12) {
+          // Kiểm tra xem slotId có nằm trong danh sách PM không để cộng 12h
+          if (selection.pm.slotIds.includes(slotId) && startHour < 12) {
             startHour += 12;
           }
+
           const startTime = new Date(date);
-          startTime.setUTCHours(startHour, 0, 0, 0);
+          startTime.setHours(startHour, 0, 0, 0); // Dùng setHours()
+
           const endTime = new Date(date);
-          endTime.setUTCHours(startHour + 1, 0, 0, 0);
+          endTime.setHours(startHour + 1, 0, 0, 0); // Dùng setHours()
+          // --- KẾT THÚC SỬA LỖI MÚI GIỜ ---
+
           slotsToBook.push({ startTime, endTime });
         }
       }
