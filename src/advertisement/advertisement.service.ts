@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Advertisement } from './entities/advertisement.entity';
-import {
-  LessThan,
-  LessThanOrEqual,
-  MoreThan,
-  MoreThanOrEqual,
-  Repository,
-} from 'typeorm';
+import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateAdvertisementDto } from './DTO/CreateAdvertisementDto';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { validate as isUuid } from 'uuid';
@@ -74,7 +68,15 @@ export class AdvertisementService {
   ) {
     const queryBuilder = this.advertisementRepository
       .createQueryBuilder('advertisement')
-      .orderBy('advertisement.createdAt', 'DESC');
+      .orderBy('advertisement.createdAt', 'DESC')
+      .leftJoin('advertisement.owner', 'owner')
+      .addSelect([
+        'owner.userId',
+        'owner.fullName',
+        'owner.email',
+        'owner.phoneNumber',
+        'owner.avatarUrl',
+      ]);
     if (search) {
       queryBuilder.andWhere('advertisement.title ILIKE :search', {
         search: `%${search}%`,
@@ -83,7 +85,12 @@ export class AdvertisementService {
     if (status) {
       queryBuilder.andWhere('advertisement.status = :status', { status });
     }
-    return paginate<Advertisement>(queryBuilder, { page, limit });
+    console.log('mao phắc');
+    console.log(await paginate<Advertisement>(queryBuilder, { page, limit }));
+
+    console.log('mao phắc');
+
+    return await paginate<Advertisement>(queryBuilder, { page, limit });
   }
 
   async getAdsByOwnerId(

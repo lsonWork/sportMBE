@@ -43,6 +43,7 @@ export class RatingController {
   }
 
   @Get(':courtId')
+  @Roles(RoleEnum.CLIENT, RoleEnum.OWNER)
   @ApiQuery({ name: 'page', required: true })
   @ApiQuery({ name: 'limit', required: true })
   async getRating(
