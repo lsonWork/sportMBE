@@ -23,6 +23,9 @@ import { CourtImage } from './entities/courtImage.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { BookingStatus } from 'src/common/enum/BookingStatus';
 import { TimeSlot } from './interface/TimeSlots';
+import { PaymentStatus } from 'src/common/enum/PaymentStatus';
+import { BookingOrder } from 'src/booking/entities/booking-order.entity';
+import { Payment } from 'src/payment/entities/payment.entity';
 
 @Injectable()
 export class CourtService {
@@ -37,6 +40,10 @@ export class CourtService {
     private courtImageRepository: Repository<CourtImage>,
     @InjectRepository(Booking)
     private bookingRepository: Repository<Booking>,
+    @InjectRepository(BookingOrder)
+    private bookingOrderRepository: Repository<BookingOrder>,
+    @InjectRepository(Payment)
+    private paymentRepository: Repository<Payment>,
     private dataSource: DataSource,
   ) {}
 
@@ -429,5 +436,104 @@ export class CourtService {
       );
 
     return paginate<Court>(queryBuilder, options);
+  }
+  async getOwnerDashboard(
+    ownerId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    // --- GIAI ĐOẠN 1: XÂY DỰNG CÁC QUERY BUILDER ---
+
+    // Query 1: Thống kê doanh thu
+    const revenueQuery = this.paymentRepository
+      .createQueryBuilder('payment')
+      .innerJoin('payment.bookingOrder', 'bookingOrder')
+      .innerJoin('bookingOrder.bookings', 'booking')
+      .innerJoin('booking.court', 'court')
+      .select('SUM(payment.amount)', 'totalRevenue')
+      .where('court.ownerId = :ownerId', { ownerId })
+      .andWhere('payment.paymentStatus = :status', {
+        status: PaymentStatus.SUCCESS,
+      });
+
+    // Query 2: Thống kê trạng thái các đơn hàng
+    const orderStatsQuery = this.bookingOrderRepository
+      .createQueryBuilder('order')
+      .innerJoin('order.bookings', 'booking')
+      .innerJoin('booking.court', 'court')
+      .select('order.status', 'status')
+      .addSelect('COUNT(DISTINCT order.orderId)', 'count')
+      .where('court.ownerId = :ownerId', { ownerId })
+      .groupBy('order.status');
+
+    // Query 3 & 4: Sân có nhiều/ít lượt book nhất
+    const courtRankingQuery = this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoin('booking.court', 'court')
+      .select('court.courtName', 'courtName')
+      .addSelect('COUNT(booking.bookingId)', 'bookingCount')
+      .where('court.ownerId = :ownerId', { ownerId })
+      .groupBy('court.courtName')
+      // Sửa lại dòng này
+      .orderBy('"bookingCount"', 'DESC'); // <-- Thêm dấu ngoặc kép
+
+    // --- GIAI ĐOẠN 2: THÊM BỘ LỌC THỜI GIAN (NẾU CÓ) ---
+    if (startDate && endDate) {
+      revenueQuery.andWhere(
+        'payment.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+      orderStatsQuery.andWhere(
+        'order.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+      courtRankingQuery.andWhere(
+        'booking.createdAt BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
+    }
+
+    // --- GIAI ĐOẠN 3: THỰC THI TẤT CẢ CÁC QUERY ---
+    const [revenueResult, orderStats, courtRankings] = await Promise.all([
+      revenueQuery.getRawOne(),
+      orderStatsQuery.getRawMany(),
+      courtRankingQuery.getRawMany(),
+    ]);
+
+    // --- GIAI ĐOẠN 4: XỬ LÝ KẾT QUẢ ---
+    const stats = {
+      cancelledOrders: 0,
+      completedOrders: 0,
+      pendingDepositOrders: 0,
+    };
+    orderStats.forEach((stat) => {
+      if (stat.status === BookingStatus.CANCELLED)
+        stats.cancelledOrders = parseInt(stat.count);
+      if (stat.status === BookingStatus.COMPLETED)
+        stats.completedOrders = parseInt(stat.count);
+      if (stat.status === BookingStatus.PENDING_DEPOSIT)
+        stats.pendingDepositOrders = parseInt(stat.count);
+    });
+
+    const mostBookedCourt = courtRankings.length > 0 ? courtRankings[0] : null;
+    const leastBookedCourt =
+      courtRankings.length > 0 ? courtRankings[courtRankings.length - 1] : null;
+
+    return {
+      totalRevenue: parseFloat(revenueResult?.totalRevenue) || 0,
+      ...stats,
+      mostBookedCourt: mostBookedCourt
+        ? {
+            name: mostBookedCourt.courtName,
+            count: parseInt(mostBookedCourt.bookingCount),
+          }
+        : null,
+      leastBookedCourt: leastBookedCourt
+        ? {
+            name: leastBookedCourt.courtName,
+            count: parseInt(leastBookedCourt.bookingCount),
+          }
+        : null,
+    };
   }
 }
