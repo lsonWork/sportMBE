@@ -10,6 +10,7 @@ import { User } from 'src/user/entities/user.entity';
 // import { BookingService } from 'src/booking/booking.service';
 import { BookingModule } from 'src/booking/booking.module';
 import { PaymentModule } from 'src/payment/payment.module';
+import { OwnerController } from './owner.controller';
 // import { PaymentService } from 'src/payment/payment.service';
 
 @Module({
@@ -19,6 +20,6 @@ import { PaymentModule } from 'src/payment/payment.module';
     PaymentModule,
   ],
   providers: [CourtService],
-  controllers: [CourtController, CourtPublicController],
+  controllers: [CourtController, CourtPublicController, OwnerController],
 })
 export class CourtModule {}

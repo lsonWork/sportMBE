@@ -56,4 +56,11 @@ export class NotificationGateway
   emitEvent(toUserId: string, payload: any, type: NotificationType) {
     this.server.to(`user-${toUserId}`).emit(type, payload);
   }
+  emitToUsers(toUserIds: string[], payload: any, type: NotificationType) {
+    if (!toUserIds || toUserIds.length === 0) {
+      return;
+    }
+    const rooms = toUserIds.map((userId) => `user-${userId}`);
+    this.server.to(rooms).emit(type, payload);
+  }
 }
