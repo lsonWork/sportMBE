@@ -18,6 +18,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client.on('error', (err) => {
       console.error('❌ Redis error:', err);
     });
+    console.log('🔗 Redis URL:', process.env.REDIS_URL);
   }
 
   async onModuleDestroy() {
@@ -25,6 +26,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   getClient(): Redis {
+    console.log('👉 Redis client type:', this.client.constructor.name);
+    console.log('👉 Redis client options:', this.client['options']);
     return this.client;
   }
 }

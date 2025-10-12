@@ -6,10 +6,10 @@ import { DataSource, Repository } from 'typeorm';
 import { validate as isUuid } from 'uuid';
 import { UpdateFriendRequestDto } from './DTO/UpdateFriendRequestDto';
 import { paginate } from 'nestjs-typeorm-paginate';
-import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/common/enum/NotificationType';
 import { Notification } from 'src/notification/entities/notification.entity';
 import { NotificationGateway } from 'src/notification/notification.gateway';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class FriendRequestService {
@@ -47,6 +47,9 @@ export class FriendRequestService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const author = await queryRunner.manager.findOneBy(User, {
+        userId: fromId,
+      });
       const newRequest = queryRunner.manager.create(FriendRequest, {
         fromId,
         toId,
@@ -67,7 +70,18 @@ export class FriendRequestService {
 
       this.notificationGateway.emitEvent(
         toId,
-        newNoti,
+        {
+          id: newNoti.notificationId,
+          type: NotificationType.FRIEND_REQUEST,
+          message: `${newNoti.content}`,
+          actor: {
+            id: fromId,
+            name: fullName,
+            avatar: author?.avatarUrl,
+            friendRequestId: newRequest.friendRequestId,
+          },
+          createdAt: newNoti.createdAt.toISOString(),
+        },
         NotificationType.FRIEND_REQUEST,
       );
       return newRequest;
@@ -127,6 +141,10 @@ export class FriendRequestService {
         request.status = status;
         await queryRunner.manager.save(request);
 
+        const author = await queryRunner.manager.findOneBy(User, {
+          userId: request.fromId,
+        });
+
         const newNoti = queryRunner.manager.create(Notification, {
           content: `${fullName} đã chấp nhận lời mời kết bạn`,
           createdAt: new Date(),
@@ -138,9 +156,30 @@ export class FriendRequestService {
 
         this.notificationGateway.emitEvent(
           request.fromId,
-          newNoti,
+          {
+            id: newNoti.notificationId,
+            type: NotificationType.FRIEND_ACCEPTED,
+            message: `${newNoti.content}`,
+            actor: {
+              id: author?.userId,
+              name: author?.fullName,
+              avatar: author?.avatarUrl,
+            },
+            createdAt: newNoti.createdAt.toISOString(),
+          },
           NotificationType.FRIEND_ACCEPTED,
         );
+        console.log({
+          id: newNoti.notificationId,
+          type: NotificationType.FRIEND_ACCEPTED,
+          message: `${newNoti.content}`,
+          actor: {
+            id: author?.userId,
+            name: author?.fullName,
+            avatar: author?.avatarUrl,
+          },
+          createdAt: newNoti.createdAt.toISOString(),
+        });
 
         return request;
       } catch (error) {
