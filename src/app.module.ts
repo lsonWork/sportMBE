@@ -22,6 +22,8 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RequestUpdateModule } from './request-update/request-update.module';
 import { FriendModule } from './friend/friend.module';
 import { RatingModule } from './rating/rating.module';
+import { BullModule } from '@nestjs/bull';
+import { NotificationQueueModuleModule } from './notification-queue-module/notification-queue-module.module';
 // import { BullModule } from '@nestjs/bull';
 // import { RedisService } from './redis/redis.service';
 // import { NotificationQueueModuleModule } from './notification-queue-module/notification-queue-module.module';
@@ -40,33 +42,19 @@ import { RatingModule } from './rating/rating.module';
       synchronize: false,
       logging: true,
     }),
-    // BullModule.forRootAsync({
-    //   inject: [RedisService],
-    //   useFactory: (redisService: RedisService) => {
-    //     console.log('⚙️ BullModule.forRootAsync called!');
-    //     const client = redisService.getClient();
-
-    //     console.log('⚙️ Bull got Redis client:', client?.constructor?.name);
-    //     console.log(
-    //       '⚙️ Redis client options inside Bull:',
-    //       client ? client['options'] : 'undefined',
-    //     );
-
-    //     return {
-    //       createClient: (type) => {
-    //         console.log(`⚙️ Bull creating Redis client for type: ${type}`);
-    //         switch (type) {
-    //           case 'client':
-    //             return client;
-    //           case 'subscriber':
-    //             return client.duplicate();
-    //           default:
-    //             return client.duplicate();
-    //         }
-    //       },
-    //     };
-    //   },
-    // }),
+    BullModule.forRoot({
+      redis: {
+        host: 'immortal-crayfish-40534.upstash.io',
+        port: 6379,
+        username: 'default',
+        password:
+          'AZ5WAAIncDFhNzMxOWExZTg5YzM0YjI1OWZiMmQzYzQ5NzRjMzQ4NnAxNDA1MzQ',
+        tls: {},
+      },
+    }),
+    BullModule.registerQueue({
+      name: 'cronQueue',
+    }),
     SportTypeModule,
     CourtModule,
     UserModule,
@@ -81,7 +69,7 @@ import { RatingModule } from './rating/rating.module';
     RequestUpdateModule,
     FriendModule,
     RatingModule,
-    // NotificationQueueModuleModule,
+    NotificationQueueModuleModule,
   ],
   controllers: [AppController],
   providers: [

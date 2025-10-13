@@ -22,6 +22,7 @@ import { CompleteBookingDto } from './DTO/complete-booking.dto';
 import { Role } from 'src/common/enum/Role';
 import { NotificationGateway } from 'src/notification/notification.gateway';
 import { NotificationType } from 'src/common/enum/NotificationType';
+import { CronProducerService } from 'src/notification-queue-module/cron-producer.service';
 
 @Injectable()
 export class BookingService {
@@ -36,6 +37,7 @@ export class BookingService {
     private bookingInviteeRepository: Repository<BookingInvitee>,
     private dataSource: DataSource,
     private readonly notificationGateway: NotificationGateway,
+    private readonly cronProducerService: CronProducerService,
   ) {}
 
   async createBooking(
