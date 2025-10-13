@@ -78,7 +78,6 @@ export class FriendRequestService {
             id: fromId,
             name: fullName,
             avatar: author?.avatarUrl,
-            friendRequestId: newRequest.friendRequestId,
           },
           createdAt: newNoti.createdAt.toISOString(),
         },
