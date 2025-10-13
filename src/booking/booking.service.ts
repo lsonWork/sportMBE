@@ -12,6 +12,7 @@ import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 import { BookingOrder } from './entities/booking-order.entity';
 import { PaymentMethod } from 'src/common/enum/PaymentMethod';
+import { Notification } from 'src/notification/entities/notification.entity';
 import {
   IPaginationOptions,
   paginate,
@@ -19,6 +20,8 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { CompleteBookingDto } from './DTO/complete-booking.dto';
 import { Role } from 'src/common/enum/Role';
+import { NotificationGateway } from 'src/notification/notification.gateway';
+import { NotificationType } from 'src/common/enum/NotificationType';
 
 @Injectable()
 export class BookingService {
@@ -32,6 +35,7 @@ export class BookingService {
     @InjectRepository(BookingInvitee)
     private bookingInviteeRepository: Repository<BookingInvitee>,
     private dataSource: DataSource,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   async createBooking(
@@ -172,6 +176,51 @@ export class BookingService {
       await queryRunner.manager.save(depositPayment);
 
       await queryRunner.commitTransaction();
+      if (inviteeIds && inviteeIds.length > 0) {
+        const inviteNotification = queryRunner.manager.create(Notification, {
+          content: `Người ${user.fullName} đã mời bạn tham gia chơi tại sân ${court.courtName}.`,
+          createdAt: new Date(),
+          userId: user.userId,
+          type: NotificationType.INVITED_TO_BOOKING,
+        });
+
+        await queryRunner.manager.save(inviteNotification);
+        await queryRunner.commitTransaction();
+
+        const notificationPayload = {
+          title: 'Lời mời chơi cùng',
+          message: `${user.fullName} đã mời bạn tham gia một lượt đặt sân.`,
+          orderId: savedOrder.orderId, // Gửi kèm ID để client có thể điều hướng
+        };
+
+        // Dùng hàm emitToUsers trong gateway
+        this.notificationGateway.emitToUsers(
+          inviteeIds,
+          notificationPayload,
+          NotificationType.INVITED_TO_BOOKING,
+        );
+      }
+      const successBookingNotification = queryRunner.manager.create(
+        Notification,
+        {
+          content: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
+          createdAt: new Date(),
+          userId: user.userId,
+          type: NotificationType.BOOKING_SUCCESS,
+        },
+      );
+      await queryRunner.manager.save(successBookingNotification);
+      await queryRunner.commitTransaction();
+      const successNotificationPayload = {
+        title: 'Đặt sân thành công',
+        message: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
+        orderId: savedOrder.orderId,
+      };
+      this.notificationGateway.emitEvent(
+        user.userId,
+        successNotificationPayload,
+        NotificationType.BOOKING_SUCCESS,
+      );
       return savedOrder;
     } catch (err) {
       await queryRunner.rollbackTransaction();
