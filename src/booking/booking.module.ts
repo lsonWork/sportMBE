@@ -10,6 +10,7 @@ import { User } from 'src/user/entities/user.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.entity';
 import { BookingOrder } from './entities/booking-order.entity';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   providers: [BookingService],
@@ -23,6 +24,7 @@ import { BookingOrder } from './entities/booking-order.entity';
       BookingOrder,
     ]),
     BookingInviteeModule,
+    NotificationModule,
   ],
   controllers: [BookingController, BookingOwnerController],
   exports: [BookingService, TypeOrmModule],
