@@ -12,6 +12,7 @@ import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.ent
 import { BookingOrder } from './entities/booking-order.entity';
 import { NotificationModule } from 'src/notification/notification.module';
 import { NotificationQueueModuleModule } from 'src/notification-queue-module/notification-queue-module.module';
+import { Notification } from 'src/notification/entities/notification.entity';
 
 @Module({
   providers: [BookingService],
@@ -23,6 +24,7 @@ import { NotificationQueueModuleModule } from 'src/notification-queue-module/not
       Payment,
       BookingInvitee,
       BookingOrder,
+      Notification,
     ]),
     BookingInviteeModule,
     NotificationModule,

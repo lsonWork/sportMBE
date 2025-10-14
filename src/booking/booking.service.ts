@@ -23,6 +23,7 @@ import { Role } from 'src/common/enum/Role';
 import { NotificationGateway } from 'src/notification/notification.gateway';
 import { NotificationType } from 'src/common/enum/NotificationType';
 import { CronProducerService } from 'src/notification-queue-module/cron-producer.service';
+import type { Job } from 'bull';
 
 @Injectable()
 export class BookingService {
@@ -38,6 +39,8 @@ export class BookingService {
     private dataSource: DataSource,
     private readonly notificationGateway: NotificationGateway,
     private readonly cronProducerService: CronProducerService,
+    @InjectRepository(Notification)
+    private notificationRepository: Repository<Notification>,
   ) {}
 
   async createBooking(
@@ -172,13 +175,79 @@ export class BookingService {
       const successBookingNotification = queryRunner.manager.create(
         Notification,
         {
-          content: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
+          content: `Bạn đã đặt sân thành công tại ${court.courtName}`,
           user: user, // userId sẽ được tự động lấy từ quan hệ
           type: NotificationType.BOOKING_SUCCESS,
           createdAt: new Date(Date.now()),
         },
       );
       await queryRunner.manager.save(successBookingNotification);
+
+      const listStartTime = slotsToBook.map((slot) => {
+        const startTime = slot.startTime;
+        const startTimeBookNoti = new Date(startTime);
+        startTimeBookNoti.setHours(startTimeBookNoti.getHours(), 0, 0, 0);
+        return startTimeBookNoti;
+      });
+
+      const relevants = [...(inviteeIds || [])];
+
+      const listBookingNotiOwner: Notification[] = [];
+      const listBookingNotiInvitee: Notification[] = [];
+      const jobs: Promise<void>[] = [];
+      for (const startTimeBookNoti of listStartTime) {
+        const delay = startTimeBookNoti.getTime() - 60 * 60 * 1000 - Date.now();
+
+        // Noti cho chủ sân
+        const ownerNoti = queryRunner.manager.create(Notification, {
+          content: `Bạn có lịch đặt tại ${court.courtName} lúc ${startTimeBookNoti.toLocaleString()}.`,
+          createdAt: new Date(),
+          user: { userId: user.userId } as User,
+          type: NotificationType.BOOKING_REMINDER,
+        });
+        listBookingNotiOwner.push(ownerNoti);
+
+        jobs.push(
+          this.cronProducerService.scheduleJob(
+            {
+              id: ownerNoti.notificationId,
+              type: NotificationType.BOOKING_REMINDER,
+              message: ownerNoti.content,
+              actor: { id: 'u1', name: 'Hệ thống' },
+              createdAt: ownerNoti.createdAt,
+              toId: user.userId,
+            },
+            delay,
+          ),
+        );
+
+        // Noti cho từng người được mời
+        for (const inviteeId of relevants) {
+          const inviteeNoti = queryRunner.manager.create(Notification, {
+            content: `Bạn được mời tham gia buổi chơi tại ${court.courtName} lúc ${startTimeBookNoti.toLocaleString()}.`,
+            createdAt: new Date(),
+            user: { userId: inviteeId } as User,
+            type: NotificationType.BOOKING_REMINDER,
+          });
+          listBookingNotiInvitee.push(inviteeNoti);
+          jobs.push(
+            this.cronProducerService.scheduleJob(
+              {
+                id: inviteeNoti.notificationId,
+                type: NotificationType.BOOKING_REMINDER,
+                message: inviteeNoti.content,
+                actor: { id: 'u1', name: 'Hệ thống' },
+                createdAt: inviteeNoti.createdAt,
+                toId: inviteeId,
+              },
+              delay,
+            ),
+          );
+        }
+      }
+      await queryRunner.manager.save(listBookingNotiOwner);
+      await queryRunner.manager.save(listBookingNotiInvitee);
+      await Promise.all(jobs);
 
       // Chỉ commit một lần ở cuối
       await queryRunner.commitTransaction();
