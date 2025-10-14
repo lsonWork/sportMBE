@@ -1,7 +1,13 @@
 import { Advertisement } from 'src/advertisement/entities/advertisement.entity';
 import { Court } from 'src/court/entities/court.entity';
 import { Notification } from 'src/notification/entities/notification.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserSubscription } from './userSubcription.entity';
 import { Booking } from 'src/booking/entities/booking.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
@@ -10,6 +16,7 @@ import { BookingInvitee } from 'src/booking-invitee/entities/booking-invitee.ent
 import { FriendRequest } from 'src/friend-request/entities/friendRequest.entity';
 import { Rating } from 'src/rating/entities/rating.entity';
 import { BookingOrder } from 'src/booking/entities/booking-order.entity';
+import { OwnerPaymentInfo } from './owner-payment-info.entity';
 
 @Entity()
 export class User {
@@ -42,9 +49,6 @@ export class User {
 
   @Column()
   role: string;
-
-  @Column({ nullable: true })
-  bankAccount: string;
 
   @Column({ nullable: true })
   documentUrl: string;
@@ -90,4 +94,9 @@ export class User {
 
   @OneToMany(() => BookingOrder, (order) => order.user)
   bookingOrders: BookingOrder[];
+
+  @OneToOne(() => OwnerPaymentInfo, (paymentInfo) => paymentInfo.user, {
+    cascade: true,
+  })
+  paymentInfo: OwnerPaymentInfo;
 }

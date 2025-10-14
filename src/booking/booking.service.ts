@@ -485,6 +485,8 @@ export class BookingService {
       .where('bo.userUserId = :userId', { userId })
       .leftJoinAndSelect('bo.bookings', 'booking')
       .leftJoinAndSelect('booking.court', 'court')
+      .leftJoinAndSelect('court.owner', 'owner')
+      .leftJoinAndSelect('owner.paymentInfo', 'paymentInfo')
       .orderBy('bo.createdAt', 'DESC');
 
     if (status) {

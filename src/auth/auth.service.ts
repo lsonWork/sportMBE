@@ -111,7 +111,6 @@ export class AuthService {
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
         role: user.role,
-        bankAccount: user.bankAccount,
         documentUrl: user.documentUrl,
         bio: user.bio,
       },

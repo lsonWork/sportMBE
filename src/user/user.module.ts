@@ -6,10 +6,11 @@ import { UserSubscription } from './entities/userSubcription.entity';
 import { UserController } from './user.controller';
 import { UserAdminController } from './user.admin.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { OwnerPaymentInfo } from './entities/owner-payment-info.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserSubscription]),
+    TypeOrmModule.forFeature([User, UserSubscription, OwnerPaymentInfo]),
     JwtModule.register({
       secret: process.env.JWT_SECRET as string,
       signOptions: { expiresIn: '1y' },
