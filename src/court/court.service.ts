@@ -215,6 +215,7 @@ export class CourtService {
       // Tìm tất cả các ảnh của các sân đó trong một query duy nhất
       const courtImages = await this.courtImageRepository.find({
         where: { court: { courtId: In(courtIds) } },
+        relations: ['court'],
       });
 
       // Gắn ảnh trở lại vào từng sân
