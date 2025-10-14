@@ -26,6 +26,7 @@ import { TimeSlot } from './interface/TimeSlots';
 import { PaymentStatus } from 'src/common/enum/PaymentStatus';
 import { BookingOrder } from 'src/booking/entities/booking-order.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
+import { DashboardRequestDTO } from './DTO/DashbroadRequestDTO';
 
 @Injectable()
 export class CourtService {
@@ -439,9 +440,9 @@ export class CourtService {
   }
   async getOwnerDashboard(
     ownerId: string,
-    startDate?: string,
-    endDate?: string,
+    dashboardRequestDTO: DashboardRequestDTO,
   ) {
+    const { startDate, endDate } = dashboardRequestDTO;
     // --- GIAI ĐOẠN 1: XÂY DỰNG CÁC QUERY BUILDER ---
 
     // Query 1: Thống kê doanh thu
