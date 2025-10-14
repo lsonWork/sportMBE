@@ -182,29 +182,50 @@ export class CourtService {
     sportTypeId?: string,
     search?: string,
   ): Promise<Pagination<Court>> {
+    // --- BƯỚC 1: XÂY DỰNG QUERY CHÍNH (KHÔNG JOIN ONE-TO-MANY) ---
     const queryBuilder = this.courtRepository.createQueryBuilder('court');
-
     queryBuilder
-      .leftJoinAndSelect('court.sportType', 'sportType') // JOIN và SELECT dữ liệu từ SportType
-      .leftJoinAndSelect('court.courtImages', 'courtImages') // JOIN và SELECT dữ liệu từ CourtImage
-      .orderBy('court.courtName', 'ASC');
+      .leftJoinAndSelect('court.sportType', 'sportType')
+      .leftJoin('court.ratings', 'rating')
+      .addSelect('COALESCE(AVG(rating.star), 0)', 'court_avgRating')
+      .orderBy('court.courtName', 'ASC')
+      .groupBy('court.courtId, sportType.sportTypeId');
 
+    // Áp dụng filter và search
     if (sportTypeId) {
       queryBuilder.andWhere('sportType.sportTypeId = :sportTypeId', {
         sportTypeId,
       });
     }
-
     if (search) {
       queryBuilder.andWhere(
         '(court.courtName ILIKE :search OR court.description ILIKE :search)',
         { search: `%${search}%` },
       );
     }
-    queryBuilder.groupBy(
-      'court.courtId, sportType.sportTypeId, courtImages.imageId',
-    );
-    return paginate<Court>(queryBuilder, options);
+
+    // --- BƯỚC 2: THỰC HIỆN PHÂN TRANG ĐỂ LẤY KẾT QUẢ CHÍNH ---
+    const paginatedCourts = await paginate<Court>(queryBuilder, options);
+
+    // --- BƯỚC 3: LẤY CÁC QUAN HỆ ONE-TO-MANY RIÊNG ---
+    // Lấy ra danh sách các ID của sân đã được phân trang
+    const courtIds = paginatedCourts.items.map((court) => court.courtId);
+
+    if (courtIds.length > 0) {
+      // Tìm tất cả các ảnh của các sân đó trong một query duy nhất
+      const courtImages = await this.courtImageRepository.find({
+        where: { court: { courtId: In(courtIds) } },
+      });
+
+      // Gắn ảnh trở lại vào từng sân
+      paginatedCourts.items.forEach((court) => {
+        court.courtImages = courtImages.filter(
+          (image) => image.court.courtId === court.courtId,
+        );
+      });
+    }
+
+    return paginatedCourts;
   }
 
   async paginateForOwner(
