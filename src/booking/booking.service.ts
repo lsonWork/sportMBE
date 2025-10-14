@@ -43,6 +43,7 @@ export class BookingService {
     userId: string,
   ): Promise<BookingOrder> {
     const { courtId, selections, inviteeIds, notes } = createBookingDto;
+
     const user = await this.userRepository.findOneBy({ userId });
     if (!user) {
       throw new HttpException(
@@ -62,28 +63,23 @@ export class BookingService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    let savedOrder: BookingOrder; // Khai báo savedOrder ở ngoài để dùng được ở cả try và sau đó
+
     try {
       const slotsToBook: { startTime: Date; endTime: Date }[] = [];
 
-      // Xử lý và chuẩn bị các slot cần đặt
       for (const selection of selections) {
         const date = selection.date;
         const allSlotIds = [...selection.am.slotIds, ...selection.pm.slotIds];
         for (const slotId of allSlotIds) {
-          // --- PHẦN SỬA LỖI MÚI GIỜ ---
           let startHour = parseInt(slotId.substring(5, 7));
-          // Kiểm tra xem slotId có nằm trong danh sách PM không để cộng 12h
           if (selection.pm.slotIds.includes(slotId) && startHour < 12) {
             startHour += 12;
           }
-
           const startTime = new Date(date);
-          startTime.setHours(startHour, 0, 0, 0); // Dùng setHours()
-
+          startTime.setHours(startHour, 0, 0, 0);
           const endTime = new Date(date);
-          endTime.setHours(startHour + 1, 0, 0, 0); // Dùng setHours()
-          // --- KẾT THÚC SỬA LỖI MÚI GIỜ ---
-
+          endTime.setHours(startHour + 1, 0, 0, 0);
           slotsToBook.push({ startTime, endTime });
         }
       }
@@ -94,6 +90,7 @@ export class BookingService {
           HttpStatus.BAD_REQUEST,
         );
       }
+
       const existingBookings = await queryRunner.manager.find(Booking, {
         where: slotsToBook.map((slot) => ({
           court: { courtId },
@@ -108,7 +105,6 @@ export class BookingService {
         );
       }
 
-      // 3. Tính toán tổng tiền và tạo BookingOrder (Đơn hàng tổng)
       const totalBookingPrice = slotsToBook.length * court.pricePerHour;
       const totalDeposit = totalBookingPrice * 0.2;
 
@@ -119,40 +115,36 @@ export class BookingService {
         status: BookingStatus.PENDING_DEPOSIT,
         notes: notes,
       });
-      const savedOrder = await queryRunner.manager.save(newOrder);
+      savedOrder = await queryRunner.manager.save(newOrder);
 
-      // 4. Tạo các Booking con (các slot) thuộc về BookingOrder
-      const bookingsToCreate = slotsToBook.map((slot) => {
-        return queryRunner.manager.create(Booking, {
+      const bookingsToCreate = slotsToBook.map((slot) =>
+        queryRunner.manager.create(Booking, {
           court,
           user,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
+          ...slot,
           totalPrice: court.pricePerHour,
           deposit: court.pricePerHour * 0.2,
           status: BookingStatus.PENDING_DEPOSIT,
           bookingOrder: savedOrder,
           bookingDate: new Date(),
-        });
-      });
+        }),
+      );
       const savedBookings = await queryRunner.manager.save(bookingsToCreate);
 
-      // 5. Xử lý mời bạn bè (nếu có)
       if (inviteeIds && inviteeIds.length > 0) {
         const inviteesToSave: BookingInvitee[] = [];
         for (const inviteeId of inviteeIds) {
           if (inviteeId === user.userId) continue;
+          // Có thể gộp các lần kiểm tra invitee này lại thành 1 query để tối ưu
           const inviteeExists = await this.userRepository.findOneBy({
             userId: inviteeId,
           });
           if (!inviteeExists) {
-            // Ném ra lỗi rõ ràng thay vì để DB báo lỗi
             throw new HttpException(
               `Không tìm thấy người dùng được mời với ID ${inviteeId}.`,
               HttpStatus.NOT_FOUND,
             );
           }
-          // TODO: Kiểm tra xem user có tồn tại không
           for (const booking of savedBookings) {
             const newInvitee = this.bookingInviteeRepository.create({
               booking: booking,
@@ -164,7 +156,6 @@ export class BookingService {
         await queryRunner.manager.save(inviteesToSave);
       }
 
-      // 6. Tạo một Payment duy nhất cho Order tổng
       const depositPayment = queryRunner.manager.create(Payment, {
         amount: totalDeposit,
         paymentMethod: PaymentMethod.DPS,
@@ -175,57 +166,54 @@ export class BookingService {
       });
       await queryRunner.manager.save(depositPayment);
 
-      await queryRunner.commitTransaction();
-      if (inviteeIds && inviteeIds.length > 0) {
-        const inviteNotification = queryRunner.manager.create(Notification, {
-          content: `Người ${user.fullName} đã mời bạn tham gia chơi tại sân ${court.courtName}.`,
-          createdAt: new Date(),
-          userId: user.userId,
-          type: NotificationType.INVITED_TO_BOOKING,
-        });
-
-        await queryRunner.manager.save(inviteNotification);
-        const notificationPayload = {
-          title: 'Lời mời chơi cùng',
-          message: `${user.fullName} đã mời bạn tham gia một lượt đặt sân.`,
-          orderId: savedOrder.orderId, // Gửi kèm ID để client có thể điều hướng
-        };
-
-        // Dùng hàm emitToUsers trong gateway
-        this.notificationGateway.emitToUsers(
-          inviteeIds,
-          notificationPayload,
-          NotificationType.INVITED_TO_BOOKING,
-        );
-      }
+      // Tạo thông báo cho chính người đặt sân
       const successBookingNotification = queryRunner.manager.create(
         Notification,
         {
           content: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
-          createdAt: new Date(),
-          userId: user.userId,
+          user: user, // userId sẽ được tự động lấy từ quan hệ
           type: NotificationType.BOOKING_SUCCESS,
         },
       );
       await queryRunner.manager.save(successBookingNotification);
-      const successNotificationPayload = {
-        title: 'Đặt sân thành công',
-        message: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
-        orderId: savedOrder.orderId,
-      };
-      this.notificationGateway.emitEvent(
-        user.userId,
-        successNotificationPayload,
-        NotificationType.BOOKING_SUCCESS,
-      );
+
+      // Chỉ commit một lần ở cuối
       await queryRunner.commitTransaction();
-      return savedOrder;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();
     }
+
+    // --- GỬI THÔNG BÁO WEBSOCKET SAU KHI TRANSACTION THÀNH CÔNG ---
+
+    // Gửi cho người đặt sân
+    const successNotificationPayload = {
+      title: 'Đặt sân thành công',
+      message: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
+      orderId: savedOrder.orderId,
+    };
+    this.notificationGateway.emitToUsers(
+      [user.userId],
+      successNotificationPayload,
+      NotificationType.BOOKING_SUCCESS,
+    );
+
+    // Gửi cho những người được mời
+    if (inviteeIds && inviteeIds.length > 0) {
+      const inviteNotificationPayload = {
+        title: 'Lời mời chơi cùng',
+        message: `${user.fullName} đã mời bạn tham gia một lượt đặt sân.`,
+        orderId: savedOrder.orderId,
+      };
+      this.notificationGateway.emitToUsers(
+        inviteeIds,
+        inviteNotificationPayload,
+        NotificationType.INVITED_TO_BOOKING,
+      );
+    }
+    return savedOrder;
   }
   /**
    * Owner xác nhận đã nhận tiền cọc cho cả một đơn hàng.
