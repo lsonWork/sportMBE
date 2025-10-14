@@ -9,6 +9,7 @@ import {
   UseGuards,
   Body,
   Patch,
+  Put,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Role } from 'src/common/enum/Role';
@@ -20,6 +21,10 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { UpdateOwnerPaymentInfoDto } from './DTO/UpdatePaymentInformationDto';
+import { OwnerPaymentInfo } from './entities/owner-payment-info.entity';
+import { GetUser } from 'src/common/decorators/get-user.decorator';
+import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('admin/users')
 export class UserAdminController {
@@ -103,5 +108,19 @@ export class UserAdminController {
   @Roles(RoleEnum.ADMIN)
   async updateToOwner(@Param('id') id: string): Promise<void> {
     return this.userService.updateClientToOwner(id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Put('payment-info')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.OWNER)
+  async updatePaymentInfo(
+    @GetUser() user: JwtUser,
+    @Body() updatePaymentInfoDto: UpdateOwnerPaymentInfoDto,
+  ): Promise<OwnerPaymentInfo> {
+    return this.userService.upsertOwnerPaymentInfo(
+      user.userId,
+      updatePaymentInfoDto,
+    );
   }
 }

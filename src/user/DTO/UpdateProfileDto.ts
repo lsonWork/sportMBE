@@ -14,9 +14,6 @@ export class UpdateProfileDto {
   phoneNumber: string;
 
   @IsString()
-  bankAccount: string;
-
-  @IsString()
   bio: string;
 
   @IsDate()

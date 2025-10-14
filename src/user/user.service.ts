@@ -10,12 +10,16 @@ import {
 } from 'nestjs-typeorm-paginate';
 import { UpdateProfileDto } from './DTO/UpdateProfileDto';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateOwnerPaymentInfoDto } from './DTO/UpdatePaymentInformationDto';
+import { OwnerPaymentInfo } from './entities/owner-payment-info.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private jwtService: JwtService,
+    @InjectRepository(OwnerPaymentInfo)
+    private readonly paymentInfoRepository: Repository<OwnerPaymentInfo>,
   ) {}
 
   async paginate(
@@ -88,7 +92,6 @@ export class UserService {
       email: updatedUser.email,
       avatarUrl: updatedUser.avatarUrl,
       phoneNumber: updatedUser.phoneNumber,
-      bankAccount: updatedUser.bankAccount,
       bio: updatedUser.bio,
       birthDate: updatedUser.birthDate,
       documentUrl: updatedUser.documentUrl,
@@ -107,5 +110,24 @@ export class UserService {
     }
     user.role = Role.OWNER;
     await this.userRepository.save(user);
+  }
+  async upsertOwnerPaymentInfo(
+    userId: string,
+    dto: UpdateOwnerPaymentInfoDto,
+  ): Promise<OwnerPaymentInfo> {
+    let paymentInfo = await this.paymentInfoRepository.findOneBy({
+      user: { userId },
+    });
+
+    if (paymentInfo) {
+      Object.assign(paymentInfo, dto);
+    } else {
+      paymentInfo = this.paymentInfoRepository.create({
+        ...dto,
+        user: { userId } as User,
+      });
+    }
+
+    return this.paymentInfoRepository.save(paymentInfo);
   }
 }

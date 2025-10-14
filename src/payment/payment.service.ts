@@ -27,9 +27,9 @@ export class PaymentService {
 
     queryBuilder
       .where('payment.userId = :userId', { userId: currentUserId })
-      .leftJoinAndSelect('payment.booking', 'booking')
-      .leftJoinAndSelect('booking.court', 'court')
-      .orderBy('payment.createdAt', 'DESC');
+      .leftJoinAndSelect('payment.bookingOrder', 'bookingOrder')
+      .leftJoinAndSelect('bookingOrder.bookings', 'booking')
+      .leftJoinAndSelect('booking.court', 'court');
 
     if (status) {
       queryBuilder.andWhere('payment.paymentStatus = :status', {
