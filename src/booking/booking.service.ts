@@ -173,6 +173,7 @@ export class BookingService {
           content: `Bạn đã đặt sân thành công tại ${court.courtName}.`,
           user: user, // userId sẽ được tự động lấy từ quan hệ
           type: NotificationType.BOOKING_SUCCESS,
+          createdAt: new Date(Date.now()),
         },
       );
       await queryRunner.manager.save(successBookingNotification);
