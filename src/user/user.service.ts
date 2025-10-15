@@ -44,7 +44,10 @@ export class UserService {
     return paginate<User>(queryBuilder, options);
   }
   async findOneById(userId: string): Promise<User> {
-    const user = await this.userRepository.findOneBy({ userId: userId });
+    const user = await this.userRepository.findOne({
+      where: { userId: userId },
+      relations: ['paymentInfo'],
+    });
 
     if (!user) {
       throw new HttpException(
@@ -72,7 +75,10 @@ export class UserService {
     updateData: Partial<User>,
   ): Promise<UpdateProfileDto> {
     await this.userRepository.update(userId, updateData);
-    const updatedUser = await this.findOneById(userId);
+    const updatedUser = await this.userRepository.findOne({
+      where: { userId },
+      relations: ['paymentInfo'], // Tải luôn paymentInfo
+    });
     if (!updatedUser) {
       throw new HttpException(
         { message: 'User not found' },
@@ -98,6 +104,10 @@ export class UserService {
       gender: updatedUser.gender,
       token: token,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (updatedUser.role === Role.OWNER && updatedUser.paymentInfo) {
+      responseDto.paymentInfo = updatedUser.paymentInfo;
+    }
     return responseDto;
   }
   async updateClientToOwner(userId: string): Promise<void> {

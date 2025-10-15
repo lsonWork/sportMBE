@@ -9,7 +9,6 @@ import {
   UseGuards,
   Body,
   Patch,
-  Put,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Role } from 'src/common/enum/Role';
@@ -21,10 +20,6 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role as RoleEnum } from 'src/common/enum/Role';
 import { ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
-import { UpdateOwnerPaymentInfoDto } from './DTO/UpdatePaymentInformationDto';
-import { OwnerPaymentInfo } from './entities/owner-payment-info.entity';
-import { GetUser } from 'src/common/decorators/get-user.decorator';
-import type { JwtUser } from 'src/common/decorators/get-user.decorator';
 
 @Controller('admin/users')
 export class UserAdminController {
@@ -100,55 +95,5 @@ export class UserAdminController {
     return plainToClass(UserResponseDTO, user, {
       excludeExtraneousValues: true,
     });
-  }
-
-  @ApiBearerAuth('access-token')
-  @Patch(':id')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.ADMIN)
-  async updateToOwner(@Param('id') id: string): Promise<void> {
-    return this.userService.updateClientToOwner(id);
-  }
-
-  @ApiBearerAuth('access-token')
-  @Put('payment-info')
-  @UseGuards(RolesGuard)
-  @Roles(RoleEnum.OWNER)
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        accountName: {
-          type: 'string',
-          example: 'NGUYEN VAN A',
-          description: 'Tên chủ tài khoản (viết hoa, không dấu)',
-        },
-        accountNumber: {
-          type: 'string',
-          example: '0123456789',
-          description: 'Số tài khoản ngân hàng',
-        },
-        bankName: {
-          type: 'string',
-          example: 'Vietcombank',
-          description: 'Tên ngân hàng',
-        },
-        qrCodeUrl: {
-          type: 'string',
-          format: 'url',
-          example: 'https://api.vietqr.io/image/970436-0123456789-....png',
-          description: 'Đường dẫn URL đến ảnh mã QR',
-        },
-      },
-    },
-  })
-  async updatePaymentInfo(
-    @GetUser() user: JwtUser,
-    @Body() updatePaymentInfoDto: UpdateOwnerPaymentInfoDto,
-  ): Promise<OwnerPaymentInfo> {
-    return this.userService.upsertOwnerPaymentInfo(
-      user.userId,
-      updatePaymentInfoDto,
-    );
   }
 }
