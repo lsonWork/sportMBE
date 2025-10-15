@@ -1,4 +1,6 @@
 import { IsDate, IsString } from 'class-validator';
+import { UpdateOwnerPaymentInfoDto } from './UpdatePaymentInformationDto';
+import { Type } from 'class-transformer';
 
 export class UpdateProfileDto {
   @IsString()
@@ -27,4 +29,7 @@ export class UpdateProfileDto {
 
   @IsString()
   token: string;
+
+  @Type(() => UpdateOwnerPaymentInfoDto)
+  paymentInfo?: UpdateOwnerPaymentInfoDto;
 }

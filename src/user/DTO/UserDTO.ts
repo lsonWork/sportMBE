@@ -1,4 +1,5 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import { OwnerPaymentInfoResponseDto } from './OwnerPaymentInfoResponseDto';
 
 export class UserResponseDTO {
   @Expose() // Đánh dấu thuộc tính này sẽ được hiển thị
@@ -29,11 +30,12 @@ export class UserResponseDTO {
   status: boolean;
 
   @Expose()
-  bankAccount: string;
-
-  @Expose()
   documentUrl: string;
 
   @Expose()
   bio: string;
+
+  @Expose()
+  @Type(() => OwnerPaymentInfoResponseDto)
+  paymentInfo?: OwnerPaymentInfoResponseDto;
 }
