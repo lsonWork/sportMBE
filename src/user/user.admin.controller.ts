@@ -114,6 +114,34 @@ export class UserAdminController {
   @Put('payment-info')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.OWNER)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accountName: {
+          type: 'string',
+          example: 'NGUYEN VAN A',
+          description: 'Tên chủ tài khoản (viết hoa, không dấu)',
+        },
+        accountNumber: {
+          type: 'string',
+          example: '0123456789',
+          description: 'Số tài khoản ngân hàng',
+        },
+        bankName: {
+          type: 'string',
+          example: 'Vietcombank',
+          description: 'Tên ngân hàng',
+        },
+        qrCodeUrl: {
+          type: 'string',
+          format: 'url',
+          example: 'https://api.vietqr.io/image/970436-0123456789-....png',
+          description: 'Đường dẫn URL đến ảnh mã QR',
+        },
+      },
+    },
+  })
   async updatePaymentInfo(
     @GetUser() user: JwtUser,
     @Body() updatePaymentInfoDto: UpdateOwnerPaymentInfoDto,
