@@ -500,6 +500,15 @@ export class CourtService {
       // Sửa lại dòng này
       .orderBy('"bookingCount"', 'DESC'); // <-- Thêm dấu ngoặc kép
 
+    const monthlyStatsQuery = this.bookingRepository
+      .createQueryBuilder('booking')
+      .innerJoin('booking.court', 'court')
+      .select("DATE_TRUNC('month', booking.bookingDate)", 'month') // Trích xuất và nhóm theo tháng
+      .addSelect('COUNT(booking.bookingId)', 'count')
+      .where('court.ownerId = :ownerId', { ownerId })
+      .groupBy('month') // Nhóm kết quả theo tháng
+      .orderBy('month', 'ASC'); // Sắp xếp theo thứ tự thời gian
+
     // --- GIAI ĐOẠN 2: THÊM BỘ LỌC THỜI GIAN (NẾU CÓ) ---
     if (startDate && endDate) {
       revenueQuery.andWhere(
@@ -514,14 +523,20 @@ export class CourtService {
         'booking.createdAt BETWEEN :startDate AND :endDate',
         { startDate, endDate },
       );
+      monthlyStatsQuery.andWhere(
+        'booking.bookingDate BETWEEN :startDate AND :endDate',
+        { startDate, endDate },
+      );
     }
 
     // --- GIAI ĐOẠN 3: THỰC THI TẤT CẢ CÁC QUERY ---
-    const [revenueResult, orderStats, courtRankings] = await Promise.all([
-      revenueQuery.getRawOne(),
-      orderStatsQuery.getRawMany(),
-      courtRankingQuery.getRawMany(),
-    ]);
+    const [revenueResult, orderStats, courtRankings, monthlyStats] =
+      await Promise.all([
+        revenueQuery.getRawOne(),
+        orderStatsQuery.getRawMany(),
+        courtRankingQuery.getRawMany(),
+        monthlyStatsQuery.getRawMany(),
+      ]);
 
     // --- GIAI ĐOẠN 4: XỬ LÝ KẾT QUẢ ---
     const stats = {
@@ -541,6 +556,11 @@ export class CourtService {
     const mostBookedCourt = courtRankings.length > 0 ? courtRankings[0] : null;
     const leastBookedCourt =
       courtRankings.length > 0 ? courtRankings[courtRankings.length - 1] : null;
+    const monthlyBookingStats = monthlyStats.map((stat) => ({
+      // Chuyển đổi định dạng ngày thành 'YYYY-MM' cho FE dễ dùng
+      month: stat.month.toISOString().substring(0, 7),
+      count: parseInt(stat.count, 10),
+    }));
 
     return {
       totalRevenue: parseFloat(revenueResult?.totalRevenue) || 0,
@@ -557,6 +577,7 @@ export class CourtService {
             count: parseInt(leastBookedCourt.bookingCount),
           }
         : null,
+      monthlyBookingStats: monthlyBookingStats,
     };
   }
 }

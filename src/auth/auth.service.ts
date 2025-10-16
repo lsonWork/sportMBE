@@ -60,17 +60,28 @@ export class AuthService {
     const { email, password, fullName, avatarUrl } = loginDTO;
     let user = await this.userRepository.findOneBy({ email });
     if (password) {
-      if (
-        !user ||
-        !user.status ||
-        !(await bcrypt.compare(password, user.password))
-      ) {
+      if (!user || !user.password) {
         throw new HttpException(
           { message: 'Invalid email or password' },
           HttpStatus.UNAUTHORIZED,
         );
       }
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        throw new HttpException(
+          'Email hoặc mật khẩu không hợp lệ',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
     } else {
+      if (user) {
+        if (user.password) {
+          throw new HttpException(
+            'Tài khoản này cần mật khẩu để đăng nhập.',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
       if (!user) {
         const newAccount = {
           fullName: fullName,
@@ -91,6 +102,12 @@ export class AuthService {
           );
         }
       }
+    }
+    if (!user || !user.status) {
+      throw new HttpException(
+        'Tài khoản đã bị vô hiệu hóa.',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const payload = {
