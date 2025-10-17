@@ -118,7 +118,12 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
     }
-    user.role = Role.OWNER;
+    if ((user.role = Role.CLIENT)) {
+      user.role = Role.OWNER;
+    }
+    if ((user.role = Role.OWNER)) {
+      user.role = Role.CLIENT;
+    }
     await this.userRepository.save(user);
   }
   async upsertOwnerPaymentInfo(
