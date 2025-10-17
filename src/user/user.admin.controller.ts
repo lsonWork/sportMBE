@@ -64,6 +64,14 @@ export class UserAdminController {
   }
 
   @ApiBearerAuth('access-token')
+  @Patch(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async updateToOwner(@Param('id') id: string): Promise<void> {
+    return this.userService.updateClientToOwner(id);
+  }
+
+  @ApiBearerAuth('access-token')
   @Get(':id/status')
   @UseGuards(RolesGuard)
   @Roles(RoleEnum.ADMIN)
