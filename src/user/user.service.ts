@@ -118,10 +118,11 @@ export class UserService {
         HttpStatus.NOT_FOUND,
       );
     }
-    if ((user.role = Role.CLIENT)) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (user.role === Role.CLIENT) {
       user.role = Role.OWNER;
-    }
-    if ((user.role = Role.OWNER)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    } else if (user.role === Role.OWNER) {
       user.role = Role.CLIENT;
     }
     await this.userRepository.save(user);
