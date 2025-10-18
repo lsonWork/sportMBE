@@ -42,15 +42,6 @@ export class AdvertisementService {
       );
     }
 
-    const diffInMs = endDate.getTime() - startDate.getTime();
-    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
-    if (diffInDays > 5) {
-      throw new HttpException(
-        { message: 'The maximum duration is 5 days' },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
     const newAds = this.advertisementRepository.create({
       ...createAdvertisementDto,
       owner: { userId },
