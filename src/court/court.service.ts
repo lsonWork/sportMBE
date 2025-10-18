@@ -199,7 +199,7 @@ export class CourtService {
     }
     if (search) {
       queryBuilder.andWhere(
-        '(court.courtName ILIKE :search OR court.description ILIKE :search)',
+        '(court.courtName ILIKE :search OR court.description ILIKE :search OR court.address ILIKE :search)',
         { search: `%${search}%` },
       );
     }
