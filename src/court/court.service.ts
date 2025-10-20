@@ -235,11 +235,11 @@ export class CourtService {
     sportTypeId?: string,
     search?: string,
   ): Promise<Pagination<Court>> {
+    // --- BƯỚC 1: XÂY DỰNG QUERY CHÍNH (KHÔNG JOIN courtImages) ---
     const queryBuilder = this.courtRepository.createQueryBuilder('court');
 
     queryBuilder
       .leftJoinAndSelect('court.sportType', 'sportType')
-      .leftJoinAndSelect('court.courtImages', 'courtImages')
       .where('court.ownerId = :ownerId', { ownerId })
       .orderBy('court.courtName', 'ASC');
 
@@ -248,13 +248,38 @@ export class CourtService {
         sportTypeId,
       });
     }
+
     if (search) {
       queryBuilder.andWhere(
-        '(court.courtName ILIKE :search OR court.description ILIKE :search)',
+        '(court.courtName ILIKE :search OR court.description ILIKE :search OR court.address ILIKE :search)',
         { search: `%${search}%` },
       );
     }
-    return paginate<Court>(queryBuilder, options);
+
+    // --- BƯỚC 2: PHÂN TRANG ĐỂ LẤY ĐÚNG ID CỦA 10 SÂN ---
+    const paginatedResult = await paginate<Court>(queryBuilder, options);
+
+    // --- BƯỚC 3: LẤY ẢNH CHO 10 SÂN ĐÓ TRONG MỘT QUERY RIÊNG ---
+    const courtIds = paginatedResult.items.map((court) => court.courtId);
+
+    if (courtIds.length === 0) {
+      return paginatedResult; // Trả về luôn nếu không có sân nào
+    }
+
+    // Lấy tất cả ảnh của các sân đã được phân trang
+    const allImages = await this.courtImageRepository.find({
+      where: { court: { courtId: In(courtIds) } },
+      relations: ['court'], // Load cả quan hệ court để so sánh
+    });
+
+    // --- BƯỚC 4: GẮN ẢNH TRỞ LẠI VÀO TỪNG SÂN ---
+    paginatedResult.items.forEach((court) => {
+      court.courtImages = allImages.filter(
+        (image) => image.court.courtId === court.courtId,
+      );
+    });
+
+    return paginatedResult;
   }
 
   async deleteCourtDto(userId: string, courtId: string): Promise<void> {
