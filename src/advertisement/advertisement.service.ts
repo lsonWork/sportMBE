@@ -76,11 +76,6 @@ export class AdvertisementService {
     if (status) {
       queryBuilder.andWhere('advertisement.status = :status', { status });
     }
-    console.log('mao phắc');
-    console.log(await paginate<Advertisement>(queryBuilder, { page, limit }));
-
-    console.log('mao phắc');
-
     return await paginate<Advertisement>(queryBuilder, { page, limit });
   }
 

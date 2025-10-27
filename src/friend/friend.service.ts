@@ -98,14 +98,20 @@ export class FriendService {
       [currentUserId],
     );
 
+    console.log(listUser);
+
     const result = shuffleArray<RequestableUser>(listUser);
     const redisInstance = this.redisService.getClient();
-
+    console.log('ID HIỆN TẠI: ', currentUserId);
     const key = `requestable-user:${currentUserId}`;
 
     await redisInstance.del(key);
-    for (const user of result) {
-      await redisInstance.rpush(key, JSON.stringify(user));
+
+    if (result.length > 0) {
+      await redisInstance.rpush(
+        key,
+        ...result.map((user) => JSON.stringify(user)),
+      );
     }
 
     return result;

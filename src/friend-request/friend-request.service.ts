@@ -168,17 +168,6 @@ export class FriendRequestService {
           },
           NotificationType.FRIEND_ACCEPTED,
         );
-        console.log({
-          id: newNoti.notificationId,
-          type: NotificationType.FRIEND_ACCEPTED,
-          message: `${newNoti.content}`,
-          actor: {
-            id: author?.userId,
-            name: author?.fullName,
-            avatar: author?.avatarUrl,
-          },
-          createdAt: newNoti.createdAt.toISOString(),
-        });
 
         return request;
       } catch (error) {

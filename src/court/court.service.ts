@@ -385,7 +385,6 @@ export class CourtService {
       address: string;
       imageUrl: string;
     }> = await this.courtRepository.query(sql, params);
-    console.log(rows);
 
     return rows.map((r) => ({
       id: String(r.id),

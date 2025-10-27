@@ -79,7 +79,6 @@ export class UserController {
         HttpStatus.FORBIDDEN,
       );
     }
-    console.log(user);
     return plainToClass(UserResponseDTO, user, {
       excludeExtraneousValues: true,
     });
