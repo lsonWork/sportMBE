@@ -236,6 +236,9 @@ export class AdvertisementService {
         startDate: LessThanOrEqual(new Date()),
         endDate: MoreThanOrEqual(new Date()),
       },
+      order: {
+        displayOrder: 'ASC',
+      },
     });
   }
 
