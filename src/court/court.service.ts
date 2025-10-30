@@ -138,43 +138,108 @@ export class CourtService {
   }
 
   async updateCourt(
-    @Param() id: string,
-    @Body() editCourtDto: EditCourtDto,
-    userId: string,
+    id: string,
+    editCourtDto: EditCourtDto,
+    ownerId: string,
   ): Promise<Court> {
-    const owner = await this.userRepository.findOneBy({ userId });
-    if (!owner) {
-      throw new HttpException(
-        { message: 'Current user not found.' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    const court = await this.courtRepository.findOne({
-      where: { courtId: id },
-      relations: ['owner'],
-    });
-    if (!court) {
-      throw new HttpException(
-        { message: 'Court not found' },
-        HttpStatus.NOT_FOUND,
-      );
-    }
-    if (court.owner.userId !== owner.userId) {
-      throw new HttpException(
-        { message: 'You do not have permission to edit this court' },
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    const { sportType: sportTypeId, ...restOfDto } = editCourtDto;
-    this.courtRepository.merge(court, restOfDto);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      const result = await this.courtRepository.save(court);
-      return result;
+      // 1. Tìm sân và kiểm tra quyền
+      const owner = await this.userRepository.findOneBy({ userId: ownerId });
+      if (!owner) {
+        throw new HttpException(
+          { message: 'Chủ sở hữu không tồn tại' },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      if (owner.role !== Role.OWNER) {
+        throw new HttpException(
+          { message: 'Chỉ chủ sở hữu mới có thể sửa sân' },
+          HttpStatus.FORBIDDEN,
+        );
+      }
+      const court = await queryRunner.manager.findOne(Court, {
+        where: { courtId: id },
+        relations: ['owner'],
+      });
+
+      if (!court) {
+        throw new HttpException('Không tìm thấy sân', HttpStatus.NOT_FOUND);
+      }
+      if (court.owner.userId !== owner.userId) {
+        throw new HttpException(
+          'Bạn không có quyền sửa sân này',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      // 2. Tách các thuộc tính ra
+      // DTO của bạn dùng 'name', 'sportType' nhưng Entity dùng 'courtName', 'sportTypeId'
+      const { name, sportType, imgUrls, ...restOfDto } = editCourtDto;
+
+      // 3. Gộp các trường đơn giản (address, description, price, ...)
+      queryRunner.manager.merge(Court, court, restOfDto);
+
+      // 4. Xử lý các trường có tên không khớp BẰNG TAY
+      if (name) {
+        court.courtName = name;
+      }
+
+      // 5. Xử lý quan hệ 'sportType' BẰNG TAY
+      if (sportType) {
+        const sportTypeEntity = await this.sportTypeRepository.findOneBy({
+          sportTypeId: sportType,
+        });
+        if (!sportTypeEntity) {
+          throw new HttpException(
+            'Loại hình thể thao không tồn tại',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+        court.sportType = sportTypeEntity;
+      }
+
+      // 6. Xử lý quan hệ 'imgUrls' BẰNG TAY (Xóa cũ, thêm mới)
+      if (imgUrls && imgUrls.length > 0) {
+        // 6a. Xóa tất cả ảnh cũ của sân này
+        await queryRunner.manager.delete(CourtImage, {
+          court: { courtId: id },
+        });
+
+        // 6b. Tạo các thực thể ảnh mới
+        const courtImagesToSave = imgUrls.map((url) => {
+          return queryRunner.manager.create(CourtImage, {
+            imageUrl: url,
+            court: court, // Gán lại cho sân đang cập nhật
+          });
+        });
+
+        // 6c. Lưu mảng ảnh mới vào DB
+        await queryRunner.manager.save(courtImagesToSave);
+      }
+
+      // 7. Lưu tất cả thay đổi của 'court'
+      await queryRunner.manager.save(court);
+
+      // 8. Commit transaction
+      await queryRunner.commitTransaction();
+
+      // 9. Trả về dữ liệu đã được cập nhật đầy đủ
+      return this.findDetailById(id); // Gọi lại hàm findDetailById để lấy full quan hệ
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException(
-        { message: 'Error updating court' },
+        'Lỗi khi cập nhật sân',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    } finally {
+      await queryRunner.release();
     }
   }
   async paginate(
