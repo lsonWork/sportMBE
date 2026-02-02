@@ -10,6 +10,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for mobile app
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
+
   app.useGlobalInterceptors(new JsendInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
