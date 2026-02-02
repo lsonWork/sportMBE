@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class LoginDTO {
   @IsNotEmpty({ message: 'Email or phone number is required' })
@@ -6,10 +6,6 @@ export class LoginDTO {
 
   @IsOptional()
   @IsNotEmpty({ message: 'Password is required' })
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/, {
-    message:
-      'Password must be at least 6 characters long and contain letters and numbers',
-  })
   password: string;
 
   @IsOptional()
