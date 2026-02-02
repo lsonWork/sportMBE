@@ -9,6 +9,12 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for mobile app
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
+
   app.useGlobalInterceptors(new JsendInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
