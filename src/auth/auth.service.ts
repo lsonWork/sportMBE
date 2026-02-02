@@ -13,6 +13,7 @@ import { MailService } from 'src/mail/mail.service';
 import { sanitizeEmail } from 'src/utils/santinizeEmail';
 import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
 import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
+import { SocialLoginDTO } from './DTO/SocialLoginDTO';
 
 @Injectable()
 export class AuthService {
@@ -57,23 +58,39 @@ export class AuthService {
   }
 
   async login(loginDTO: LoginDTO) {
-    const { email, password, fullName, avatarUrl } = loginDTO;
-    let user = await this.userRepository.findOneBy({ email });
+    const { emailOrPhone, password, fullName, avatarUrl } = loginDTO;
+
+    // Determine if input is email or phone number
+    const isEmail = emailOrPhone.includes('@');
+    const searchCriteria = isEmail
+      ? { email: emailOrPhone }
+      : { phoneNumber: emailOrPhone };
+
+    let user = await this.userRepository.findOneBy(searchCriteria);
+
     if (password) {
       if (!user || !user.password) {
         throw new HttpException(
-          { message: 'Invalid email or password' },
+          { message: 'Invalid credentials' },
           HttpStatus.UNAUTHORIZED,
         );
       }
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         throw new HttpException(
-          'Email hoặc mật khẩu không hợp lệ',
+          'Email/Số điện thoại hoặc mật khẩu không hợp lệ',
           HttpStatus.UNAUTHORIZED,
         );
       }
     } else {
+      // Social login flow (only with email)
+      if (!isEmail) {
+        throw new HttpException(
+          'Đăng nhập bằng số điện thoại yêu cầu mật khẩu',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       if (user) {
         if (user.password) {
           throw new HttpException(
@@ -85,7 +102,7 @@ export class AuthService {
       if (!user) {
         const newAccount = {
           fullName: fullName,
-          email: email,
+          email: emailOrPhone,
           status: true,
           role: Role.CLIENT,
           avatarUrl: avatarUrl,
@@ -103,6 +120,7 @@ export class AuthService {
         }
       }
     }
+
     if (!user || !user.status) {
       throw new HttpException(
         'Tài khoản đã bị vô hiệu hóa.',
@@ -196,5 +214,64 @@ export class AuthService {
       );
     }
     return true;
+  }
+
+  async socialLogin(socialLoginDTO: SocialLoginDTO) {
+    const { email, fullName } = socialLoginDTO;
+
+    let user = await this.userRepository.findOneBy({ email });
+
+    // If user doesn't exist, create new user with fullName
+    if (!user) {
+      const newAccount = {
+        fullName: fullName || email.split('@')[0],
+        email: email,
+        status: true,
+        role: Role.CLIENT,
+      };
+
+      const newUserEntity = this.userRepository.create(newAccount);
+      try {
+        user = await this.userRepository.save(newUserEntity);
+      } catch (error) {
+        const err = error as Error;
+        throw new HttpException(
+          { message: err.message || 'Error creating user' },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    // Check if user is active
+    if (!user.status) {
+      throw new HttpException(
+        'Tài khoản đã bị vô hiệu hóa.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Generate JWT token
+    const payload = {
+      email: user.email,
+      userId: user.userId,
+      role: user.role,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+    };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      message: 'Login successful',
+      access: token,
+      user: {
+        fullName: user.fullName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        avatarUrl: user.avatarUrl,
+        role: user.role,
+        documentUrl: user.documentUrl,
+        bio: user.bio,
+      },
+    };
   }
 }

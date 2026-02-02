@@ -8,6 +8,7 @@ import { ApiBody } from '@nestjs/swagger';
 import { SendOtpDTO } from './DTO/SendOtpDTO';
 import { VerifyOtpDTO } from './DTO/VerifyOtpDTO';
 import { ChangePasswordDTO } from './DTO/ChangePasswordDTO';
+import { SocialLoginDTO } from './DTO/SocialLoginDTO';
 
 @Controller('auth')
 export class AuthController {
@@ -35,15 +36,57 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        email: { type: 'string', example: 'user@example.com' },
-        password: { type: 'string', example: 'P@ssw0rd123' },
-        fullName: { type: 'string', example: 'Nguyen Van A' },
-        imgUrl: { type: 'string', example: 'https://example.com/avatar.jpg' },
+        emailOrPhone: {
+          type: 'string',
+          example: 'user@example.com',
+          description: 'Email hoặc số điện thoại',
+        },
+        password: {
+          type: 'string',
+          example: 'P@ssw0rd123',
+          description: 'Mật khẩu (bắt buộc khi đăng nhập bằng số điện thoại)',
+        },
+        fullName: {
+          type: 'string',
+          example: 'Nguyen Van A',
+          description: 'Tên đầy đủ (chỉ cho social login)',
+        },
+        avatarUrl: {
+          type: 'string',
+          example: 'https://example.com/avatar.jpg',
+          description: 'URL avatar (chỉ cho social login)',
+        },
       },
+      required: ['emailOrPhone'],
     },
   })
   async login(@Body() loginDTO: LoginDTO) {
     const result = await this.authService.login(loginDTO);
+    return result;
+  }
+
+  @Public()
+  @Post('social-login')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'user@example.com',
+          description: 'Email từ social provider (Google, Facebook)',
+        },
+        fullName: {
+          type: 'string',
+          example: 'Nguyen Van A',
+          description: 'Tên đầy đủ từ social provider',
+        },
+      },
+      required: ['email'],
+    },
+  })
+  async socialLogin(@Body() socialLoginDTO: SocialLoginDTO) {
+    const result = await this.authService.socialLogin(socialLoginDTO);
     return result;
   }
 
